@@ -1,146 +1,278 @@
 import * as supabase from '@supabase/supabase-js';
 import express from 'express';
-import * as sgp from "sgp4";
+import * as sgp from 'sgp4';
 import fetch from 'cross-fetch';
 
 import { calculateSatelliteData, parseElements } from './util';
 import { Satellite } from './types';
 
+import * as pg from 'pg';
+
+const pg_client = new pg.Client({
+    host: process.env.PG_HOST,
+    port: parseInt(process.env.PG_PORT),
+    user: process.env.PG_USER,
+    password: process.env.PG_PASSWORD,
+});
+
 const app = express();
 const port = 3000;
 
 let supabaseUrl = process.env.SUPABASE_URL;
-const supabaseApiKey = process.env.SUPABASE_API_KEY
-const supabaseSecret = process.env.SUPABASE_SECRET
+const supabaseApiKey = process.env.SUPABASE_API_KEY;
+const supabaseSecret = process.env.SUPABASE_SECRET;
 
-console.log(supabaseUrl)
-const client = supabase.createClient(supabaseUrl, supabaseApiKey, {
-  auth: {
-    persistSession: true
-  },
+const supabaseClient = supabase.createClient(supabaseUrl, supabaseApiKey, {
+    auth: {
+        persistSession: true,
+    },
 });
 
-app.listen((port), () => {
-  // return console.log(`Express is listening at http://localhost:${port}`);
-  // await fetch_tle(client);
-  seedSatellites(client);
-  console.log("aaa");
-  // register client
+supabaseClient
+    .channel('value-db-changes')
+    .on(
+        'postgres_changes',
+        {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'satellite',
+            filter: 'satnum=eq.28380',
+        },
+        (payload) => console.log('Received payload: ', payload),
+    )
+    .subscribe();
 
-  // make connection
+async function fetchServerSettings() {
+    const text = 'SELECT last_update FROM public.settings';
 
-  // async calculate_tle_position
-  // async calculate_ground_track
-});
-
-// fetch all tle
-async function fetch_tle(client: supabase.SupabaseClient) {
-  const { data, error } = await client
-  .from('ground_station')
-  .select().limit(10);
-
-  if (error) {
-    console.error("Cannot fetch data.");
-    return;
-  }
-
-  console.log("Fetched data: ")
-  console.log(data);
-
+    try {
+        const res = await pg_client.query(text);
+        return res.rows[0].last_update;
+    } catch (e) {
+        console.log(`Could not fetch settings. Error ${e.stack}`);
+    }
 }
 
-async function seedSatellites(client: supabase.SupabaseClient) {
+async function init() {
+    console.log('[+] Starting server ...');
 
-  let host = "https://celestrak.org";
-  let path = "/NORAD/elements/gp.php?GROUP=visual&FORMAT=tle";
+    console.log('[+] Connecting to PostgreSQL ...');
+    await pg_client.connect();
 
-  let res = await fetch(host + path);
-  let tleData = await res.text();
+    // recalculateAndUpdateDbSatellites();
+    setInterval(recalculateAndUpdateDbSatellites, 1000 * 10);
+    // setInterval(updateTleSets, 1000 * 60 * 60 * 5);
+}
 
-  const sats = parseElements(tleData);
+app.listen(port, () => {
+    console.log(`Express is listening at http://localhost:${port}`);
 
-  const satellites = sats.map(satellite => {
-    let constants = sgp.twoline2rv(satellite.line_1, satellite.line_2, sgp.wgs84())
+    init();
+});
 
-    constants.name = satellite.name;
-    constants.tle_line_one = satellite.line_1;
-    constants.tle_line_two = satellite.line_2;
+function shouldUpdateTleDatabase(last_update: Date): boolean {
+    let now = new Date();
+
+    let next_update_time = new Date(
+        last_update.setHours(last_update.getHours() + 3),
+    );
+
+    console.log('next update', next_update_time);
+
+    if (now.getTime() > next_update_time.getTime()) {
+        console.log(
+            'Last updated happened more than 3 hours ago. Updating ...',
+        );
+        return true;
+    } else {
+        const minutes =
+            (next_update_time.getTime() - now.getTime()) / 1000 / 60;
+        console.log(
+            `No update required. Time left before next update: ${Math.round(
+                minutes,
+            )} minutes (${Math.round(minutes) / 60} hours).`,
+        );
+        return false;
+    }
+}
+
+async function updateTleSets() {
+    console.log('[+] Fetching app settings from server ...');
+    const settings = await fetchServerSettings();
+    let last_update = new Date(settings[0].last_update + 'Z');
+
+    if (!shouldUpdateTleDatabase(last_update)) return;
+
+    let host = 'https://celestrak.org';
+    let path = '/NORAD/elements/gp.php?GROUP=musson&FORMAT=tle';
+
+    let res = await fetch(host + path);
+    let tleData = await res.text();
+
+    const sats = parseElements(tleData);
+
+    const satellites = sats.map((satellite) =>
+        prepareSatelliteObject(
+            satellite.name,
+            satellite.line_1,
+            satellite.line_2,
+        ),
+    );
+
+    for (let i = 0; i < satellites.length; i++) {
+        updateSatelliteElements(satellites[i]);
+    }
+}
+
+async function recalculateAndUpdateDbSatellites() {
+    // fetch settings
+    try {
+        const tleSets = await fetchTwoLineElements();
+
+        for (let i = 0; i < tleSets.length; i++) {
+            const set = tleSets[i];
+
+            let satellite = prepareSatelliteObject(
+                set.name,
+                set.tle_line_one,
+                set.tle_line_two,
+            );
+
+            // calculate satellite data
+            const calculatedSatellitePosition = await calculateSatelliteData(
+                satellite,
+            );
+
+            // update satellite
+            await updateSatellitePosition(calculatedSatellitePosition);
+        }
+    } catch (error) {
+        console.error(
+            `Error while updating satellite positions. Error: ${error}`,
+        );
+    }
+}
+
+async function updateSatelliteElements(satellite: Satellite) {
+    const text =
+        'UPDATE public.satellite SET tle_line_one = $1, tle_line_two = $2 WHERE satnum = $3;';
+    const values = [
+        satellite.tle_line_one,
+        satellite.tle_line_two,
+        satellite.satnum,
+    ];
+
+    try {
+        await pg_client.query(text, values);
+        console.log(
+            `Updated TLE set for satellite ${satellite.name} (${satellite.satnum}).`,
+        );
+    } catch (error) {
+        console.error(
+            `Cannot update TLE for satellite ${satellite.name}. Error: ${error.stack}`,
+        );
+    }
+}
+
+async function updateSatellitePosition(satellite: Satellite) {
+    const text =
+        'UPDATE public.satellite SET latitude = $1, longitude = $2, speed = $3 WHERE satnum = $4;';
+    const values = [
+        satellite.latitude,
+        satellite.longitude,
+        satellite.speed,
+        satellite.satnum,
+    ];
+
+    try {
+        await pg_client.query(text, values);
+        console.log(
+            `Updated position for ${satellite.name} (${satellite.satnum}).`,
+        );
+    } catch (error) {
+        console.error(
+            `Cannot update position for satellite ${satellite.name}. Error: ${error.stack}`,
+        );
+    }
+}
+
+function prepareSatelliteObject(
+    name: string,
+    tle_line_one: string,
+    tle_line_two: string,
+): Satellite & Record<string, any> {
+    let constants = sgp.twoline2rv(tle_line_one, tle_line_two, sgp.wgs84());
+
+    constants.name = name;
+    constants.tle_line_one = tle_line_one;
+    constants.tle_line_two = tle_line_two;
+    constants.inclination = constants.inclo;
+    constants.satellite_number = constants.satnum;
+    constants.epoch_days = constants.satnum;
+    constants.latitude = 0;
+    constants.longitude = 0;
 
     return constants;
-  });
-
-  let db_satellites = satellites.map((satellite) => 
-   ({
-      ...satellite,
-      name: satellite.name,
-      latitude: 0,
-      longitude: 0,
-      inclination: satellite.inclo,
-      satellite_number: satellite.satnum,
-      epoch_days: satellite.epochdays,
-    })
-  );
-
-  for (let i = 0; i < db_satellites.length; i++) {
-    let data = await calculateSatelliteData(db_satellites[i]);
-
-    // upsert to supabase
-    upsertSatellite(data);
-
-    console.log("----");
-    console.log(data);
-    console.log('----');
-  }
-
-  // await Promise.all(db_satellites);
-  // calculateSatellitePosition(db_satellites[0], 0);
-
-  // await Promise.all([...db_satellites]);
-  // name
-  // lat  (calculate)
-  // long (calculate)
-  // inclo (precision)
-  // satnum (text)
-  // epochdays (to int)
-
-  // console.log(sats);
-
-
-  // console.log("Seeding database...")
-  // sats.forEach(async satellite => 
-  //   {
-  //   console.log(`Inserting ${satellite.name}`);
-    // const { data, error } = await client.from('TLE').upsert({
-    //   name: satellite.name,
-    //   tle_line_one: satellite.line_1,
-    //   tle_line_two: satellite.line_2,
-    // });
-
-  //   if (error) console.error(error);
-
-  //   console.log(data);
-// });
-
-console.log("Done.");
 }
 
-async function upsertSatellite(satellite: Satellite) {
-  const { data, error } = await client.from('satellite').upsert({
-    name: satellite.name,
-    satnum: satellite.satnum,
-    latitude: satellite.latitude,
-    longitude: satellite.longitude,
-    epoch_days: satellite.epoch_days,
-    speed: satellite.speed,
-    orbital_period: satellite.orbital_period,
-    tle_line_one: satellite.tle_line_one,
-    tle_line_two: satellite.tle_line_two,
-    inclination: satellite.inclination,
-  });
+// fetch all TLE from satellite tabl
+async function fetchTwoLineElements() {
+    const text =
+        'SELECT name, tle_line_one, tle_line_two from public.satellite';
 
-  if (error) {
-    console.error(`Cannot upsert satellite ${satellite.name}. Error: ${error.message}. Hint: ${error.hint}`);
-  }
+    // async/await
+    try {
+        const res = await pg_client.query(text);
+        return res.rows;
+    } catch (error) {
+        console.error(`Cannot fetch satellite TLE sets. Error: ${error.stack}`);
+    }
+}
 
-  console.log(data);
+async function seedSatelliteDb() {
+    let host = 'https://celestrak.org';
+    let path = '/NORAD/elements/gp.php?GROUP=musson&FORMAT=tle';
+
+    let res = await fetch(host + path);
+    let tleData = await res.text();
+
+    const sats = parseElements(tleData);
+
+    const satellites = sats.map((satellite) =>
+        prepareSatelliteObject(
+            satellite.name,
+            satellite.line_1,
+            satellite.line_2,
+        ),
+    );
+
+    for (let i = 0; i < satellites.length; i++) {
+        insertSatellite(satellites[i]);
+    }
+}
+
+async function insertSatellite(satellite: Satellite) {
+    const text = `INSERT INTO public.satellite(name, satnum, latitude, longitude, epoch_days, speed, orbital_period, tle_line_one, tle_line_two, inclination) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`;
+    const values = [
+        satellite.name,
+        satellite.satnum,
+        satellite.latitude,
+        satellite.longitude,
+        satellite.epoch_days,
+        satellite.speed,
+        satellite.orbital_period,
+        satellite.tle_line_one,
+        satellite.tle_line_two,
+        satellite.inclination,
+    ];
+
+    // async/await
+    try {
+        const res = await pg_client.query(text, values);
+        // console.log(`Satellite ${res.rows[0].name} INSERTED.`);
+    } catch (error) {
+        console.error(
+            `Cannot upsert satellite ${satellite.name}. Error: ${error.stack}`,
+        );
+    }
 }
