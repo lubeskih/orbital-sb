@@ -28,20 +28,6 @@ const supabaseClient = supabase.createClient(supabaseUrl, supabaseApiKey, {
     },
 });
 
-supabaseClient
-    .channel('value-db-changes')
-    .on(
-        'postgres_changes',
-        {
-            event: 'UPDATE',
-            schema: 'public',
-            table: 'satellite',
-            filter: 'satnum=eq.28380',
-        },
-        (payload) => console.log('Received payload: ', payload),
-    )
-    .subscribe();
-
 async function fetchServerSettings() {
     const text = 'SELECT last_update FROM public.settings';
 
@@ -60,11 +46,11 @@ async function init() {
     await pg_client.connect();
 
     // recalculateAndUpdateDbSatellites();
-    setInterval(recalculateAndUpdateDbSatellites, 1000 * 10);
+    setInterval(recalculateAndUpdateDbSatellites, 1000);
     // setInterval(updateTleSets, 1000 * 60 * 60 * 5);
 }
 
-app.listen(port, () => {
+app.listen(3001, () => {
     console.log(`Express is listening at http://localhost:${port}`);
 
     init();
