@@ -10,6 +10,7 @@ body {
   width: 150vh;
   height: 100vh;
   border: 2px solid pink;
+  background-color: rgb(241, 241, 241);
 }
 
 .info {
@@ -34,4 +35,56 @@ body {
   line-height: normal;
   float: left;
   font-family: Ubuntu Mono;
+}
+
+.log {
+  margin: 10px 10px 10px 0px;
+  background-color: #2b303b;
+  max-height: 18vh;
+  color: white;
+  padding: 5px;
+  font-family: "Ubuntu Mono";
+  overflow-y: scroll;
+}
+
+.chart {
+  background-color: #232936;
+  width: 100%;
+  height: 100%;
+}
+
+.info {
+  margin: 10px 10px 10px 0px;
+  background-color: #232936;
+  max-height: 18vh;
+  color: white;
+  padding: 6px;
+  font-family: "Ubuntu Mono";
+}
+
+span {
+  background-color: #0f0f0f;
+  color: rgb(255, 255, 255);
+  padding: 2px;
+}
+
+p {
+  margin: 3px;
+  transition: 0.5s;
+}
+
+p:hover {
+  background-color: #ededed;
+}
+
+.satnum {
+  background-color: #0d0f14;
+  color: white;
+}
+
+.latitude,
+.longitude,
+.speed {
+  background-color: white;
+  color: #0d0f14;
 }

@@ -56,20 +56,38 @@ interface IItemProps {
 }
 
 function Item(props: IItemProps) {
+  const [track, setTrack] = useState(false);
+  const [groundTrack, setGroundTrack] = useState(false);
+
+  const handleOnTrackInputChange = (e: boolean) => {
+    setTrack(e);
+  };
+
+  const handleOnGroundTrackInputChange = (e: boolean) => {
+    if (!track) return;
+
+    setGroundTrack(e);
+  };
+
   return (
     <>
       <div style={{ backgroundColor: props.color }} className="item">
         <label className="switch">
-          <input type="checkbox"></input>
+          <input
+            onChange={(e) => handleOnTrackInputChange(e.target.checked)}
+            type="checkbox"
+          ></input>
           <span className="slider"></span>
         </label>{" "}
         {props.name}{" "}
         <input
           className="item-checkbox"
+          onChange={(e) => handleOnGroundTrackInputChange(e.target.checked)}
           type="checkbox"
-          id="vehicle1"
-          name="vehicle1"
-          value="Bike"
+          id=""
+          name=""
+          value=""
+          disabled={!track}
         ></input>
       </div>
     </>
