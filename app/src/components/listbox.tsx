@@ -4,22 +4,24 @@ import "./listbox.css";
 
 import React, { useState } from "react";
 import { Store } from "../store";
+import { observer } from "mobx-react-lite";
+import { toJS } from "mobx";
 
 interface IListboxProps {
   store: Store;
 }
 
-function Listbox(props: IListboxProps) {
-  let all = props.store.availableSatellites;
-  let [items, setItems] = useState(all);
+const ListBox = observer((props: IListboxProps) => {
+  let all = toJS(props.store.availableSatellites);
+  let [value, setValue] = useState("");
+
   let [alternate, setAlternate] = useState(true);
 
-  console.log("EMPTY", all);
-
-  // let items = ["andrej", "tino", "stefan", "andrej", "tino", "stefan"];
+  console.log(all);
 
   const handleOnInputChange = (value: string) => {
-    setItems(all.filter((item) => item.name.includes(value)));
+    setValue(value);
+    // setItems();
   };
 
   const handleAlternate = () => {
@@ -27,6 +29,8 @@ function Listbox(props: IListboxProps) {
     alternate = !alternate;
     return color;
   };
+
+  const items = all.filter((item) => item.name.includes(value));
 
   return (
     <>
@@ -48,7 +52,7 @@ function Listbox(props: IListboxProps) {
       </div>
     </>
   );
-}
+});
 
 interface IItemProps {
   name: string;
@@ -94,4 +98,4 @@ function Item(props: IItemProps) {
   );
 }
 
-export default Listbox;
+export default ListBox;

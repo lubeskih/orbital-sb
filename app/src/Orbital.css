@@ -41,10 +41,13 @@ body {
   margin: 10px 10px 10px 0px;
   background-color: #2b303b;
   max-height: 18vh;
+  height: 18vh;
   color: white;
   padding: 5px;
   font-family: "Ubuntu Mono";
   overflow-y: scroll;
+  /* border: 2px solid black;
+  box-shadow: 5px 10px; */
 }
 
 .chart {
@@ -60,6 +63,7 @@ body {
   color: white;
   padding: 6px;
   font-family: "Ubuntu Mono";
+  overflow-y: scroll;
 }
 
 span {

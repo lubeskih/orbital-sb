@@ -1,7 +1,9 @@
 // Style
 import "bootstrap/dist/css/bootstrap.min.css";
+import { toJS } from "mobx";
 
-import * as React from "react";
+import { observer } from "mobx-react";
+import React, { Component } from "react";
 
 import Select from "react-select";
 import Listbox from "./components/listbox";
@@ -10,6 +12,40 @@ import "./Orbital.css";
 // Store
 import { Store } from "./store";
 const store = new Store();
+
+interface ILogProps {
+  store: Store;
+}
+
+interface IProps {
+  store: Store;
+}
+
+@observer
+export class LogView extends Component<IProps, {}> {
+  constructor(props: IProps) {
+    super(props);
+  }
+
+  render() {
+    return (
+      <>
+        {toJS(this.props.store.log).map((log, index) => (
+          <p key={`${log.lat}-${log.lon}-${log.name}-${log.spd}`}>
+            &gt;{" "}
+            <span className="payload">
+              INC MSG <small>(redacted)</small>
+            </span>
+            : <span className="satnum">SAT</span> {log.name}.{" "}
+            <span className="latitude">LAT</span> {log.lat}.{" "}
+            <span className="longitude">LON</span> {log.lon}.{" "}
+            <span className="speed">SPD</span> {log.spd} km/s{" "}
+          </p>
+        ))}
+      </>
+    );
+  }
+}
 
 function Orbital() {
   const client = store.getClient();
@@ -56,100 +92,15 @@ function Orbital() {
       </div>
       <div className="row mt-3">
         <div style={{ border: "2px solid red" }} className="col-7">
-          <div className="log">{logPanel()}</div>
+          <div className="log">
+            <LogView store={store} />
+          </div>
         </div>
         <div style={{ border: "2px solid yellow" }} className="col">
           <div className="info">{infoPanel()}</div>
         </div>
       </div>
     </div>
-  );
-}
-
-function logPanel() {
-  return (
-    <>
-      <p>
-        &gt;{" "}
-        <span className="payload">
-          INC MSG <small>(redacted)</small>
-        </span>
-        : <span className="satnum">SAT</span> COSMOS 29329.{" "}
-        <span className="latitude">LAT</span> 32.14323.{" "}
-        <span className="longitude">LON</span> 42.13423.{" "}
-        <span className="speed">SPD</span> 73.24 km/s{" "}
-      </p>{" "}
-      <p>
-        &gt;{" "}
-        <span className="payload">
-          INC MSG <small>(redacted)</small>
-        </span>
-        : <span className="satnum">SAT</span> COSMOS 29329.{" "}
-        <span className="latitude">LAT</span> 32.14323.{" "}
-        <span className="longitude">LON</span> 42.13423.{" "}
-        <span className="speed">SPD</span> 73.24 km/s{" "}
-      </p>{" "}
-      <p>
-        &gt;{" "}
-        <span className="payload">
-          INC MSG <small>(redacted)</small>
-        </span>
-        : <span className="satnum">SAT</span> COSMOS 29329.{" "}
-        <span className="latitude">LAT</span> 32.14323.{" "}
-        <span className="longitude">LON</span> 42.13423.{" "}
-        <span className="speed">SPD</span> 73.24 km/s{" "}
-      </p>{" "}
-      <p>
-        &gt;{" "}
-        <span className="payload">
-          INC MSG <small>(redacted)</small>
-        </span>
-        : <span className="satnum">SAT</span> COSMOS 29329.{" "}
-        <span className="latitude">LAT</span> 32.14323.{" "}
-        <span className="longitude">LON</span> 42.13423.{" "}
-        <span className="speed">SPD</span> 73.24 km/s{" "}
-      </p>{" "}
-      <p>
-        &gt;{" "}
-        <span className="payload">
-          INC MSG <small>(redacted)</small>
-        </span>
-        : <span className="satnum">SAT</span> COSMOS 29329.{" "}
-        <span className="latitude">LAT</span> 32.14323.{" "}
-        <span className="longitude">LON</span> 42.13423.{" "}
-        <span className="speed">SPD</span> 73.24 km/s{" "}
-      </p>{" "}
-      <p>
-        &gt;{" "}
-        <span className="payload">
-          INC MSG <small>(redacted)</small>
-        </span>
-        : <span className="satnum">SAT</span> COSMOS 29329.{" "}
-        <span className="latitude">LAT</span> 32.14323.{" "}
-        <span className="longitude">LON</span> 42.13423.{" "}
-        <span className="speed">SPD</span> 73.24 km/s{" "}
-      </p>{" "}
-      <p>
-        &gt;{" "}
-        <span className="payload">
-          INC MSG <small>(redacted)</small>
-        </span>
-        : <span className="satnum">SAT</span> COSMOS 29329.{" "}
-        <span className="latitude">LAT</span> 32.14323.{" "}
-        <span className="longitude">LON</span> 42.13423.{" "}
-        <span className="speed">SPD</span> 73.24 km/s{" "}
-      </p>{" "}
-      <p>
-        &gt;{" "}
-        <span className="payload">
-          INC MSG <small>(redacted)</small>
-        </span>
-        : <span className="satnum">SAT</span> COSMOS 29329.{" "}
-        <span className="latitude">LAT</span> 32.14323.{" "}
-        <span className="longitude">LON</span> 42.13423.{" "}
-        <span className="speed">SPD</span> 73.24 km/s{" "}
-      </p>{" "}
-    </>
   );
 }
 

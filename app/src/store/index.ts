@@ -1,5 +1,5 @@
 // Libraries
-import { observable } from "mobx";
+import { action, makeAutoObservable, observable, runInAction } from "mobx";
 
 import * as supabase from "@supabase/supabase-js";
 
@@ -29,6 +29,8 @@ export class Store {
     this.subscribeToSatellite("32052");
 
     this.fetchAvailableSatellites();
+
+    makeAutoObservable(this);
   }
 
   public async subscribeToSatellite(satnum: string) {
@@ -59,6 +61,12 @@ export class Store {
           console.log(
             `${name}: (${latitude}, ${longitude}) with ${speed} km/s`
           );
+          this.addToLog({
+            lat: latitude,
+            lon: longitude,
+            spd: speed,
+            name: name,
+          });
         }
       )
       .subscribe();
@@ -119,14 +127,16 @@ export class Store {
       return;
     }
 
-    this.availableSatellites = data;
+    runInAction(() => (this.availableSatellites = data));
 
     console.log(this.availableSatellites);
   }
 
+  @observable.ref public availableSatellites: {
+    name: string;
+    satnum: string;
+  }[] = [];
   @observable public activeSatellites: { name: string; satnum: string }[] = [];
-  @observable public availableSatellites: { name: string; satnum: string }[] =
-    [];
   @observable public groundStations: { value: string; label: string }[] = [];
 
   @observable public currentGroundStations = [];
@@ -134,4 +144,34 @@ export class Store {
 
   private supabaseUrl = process.env.SUPABASE_URL || "";
   private supabaseApiKey = process.env.SUPABASE_API_KEY || "";
+
+  // array or map od item => flag
+  // metod shto selektira flag
+
+  // dodava vo array
+  // array se koristi vo listbox da se izrenderirash checked / uncheck
+  // vo isto vreme se koristi vo mapata da znaeme dal se render ili ne
+
+  public log: {
+    lat: string;
+    lon: string;
+    spd: string;
+    name: string;
+  }[] = observable.array([]);
+
+  addToLog = action(
+    (data: { lat: string; lon: string; spd: string; name: string }) => {
+      if (this.log.length > 9) {
+        // TODO: first log on top instead
+        this.log.pop();
+      }
+
+      // redact
+      data.lat = parseFloat(data.lat).toPrecision(5).toString();
+      data.lon = parseFloat(data.lon).toPrecision(5).toString();
+      data.spd = parseFloat(data.spd).toPrecision(5).toString();
+
+      this.log.unshift(data);
+    }
+  );
 }
