@@ -2,13 +2,13 @@
 import { action, makeAutoObservable, observable, runInAction } from "mobx";
 
 import * as supabase from "@supabase/supabase-js";
+import { ActiveSatellite } from "../types";
 
 /**
  * Application store
  */
 export class Store {
   private supabaseClient: supabase.SupabaseClient;
-  private satellitePositionChannel: supabase.RealtimeChannel;
   private activeSatelliteSubscribtions: Map<string, supabase.RealtimeChannel> =
     new Map();
 
@@ -23,11 +23,6 @@ export class Store {
       }
     );
 
-    this.satellitePositionChannel =
-      this.supabaseClient.channel("satellite_position");
-
-    this.subscribeToSatellite("32052");
-
     this.fetchAvailableSatellites();
 
     makeAutoObservable(this);
@@ -39,7 +34,8 @@ export class Store {
       return;
     }
 
-    const subscription = this.satellitePositionChannel
+    const subscription = this.supabaseClient
+      .channel(`public:satellite:satnum=eq.${satnum}`)
       .on(
         "postgres_changes",
         {
@@ -79,7 +75,7 @@ export class Store {
 
   public async unsubscribeFromSatellite(satnum: string) {
     if (this.activeSatelliteSubscribtions.has(satnum)) {
-      this.activeSatelliteSubscribtions.get(satnum)?.unsubscribe();
+      await this.activeSatelliteSubscribtions.get(satnum)?.unsubscribe();
       this.activeSatelliteSubscribtions.delete(satnum);
 
       console.info("Unsubscribed from satellite ", satnum);
@@ -127,15 +123,66 @@ export class Store {
       return;
     }
 
-    runInAction(() => (this.availableSatellites = data));
+    let satellites = data.map((item) => ({
+      ...item,
+      isActive: false,
+      isGroundTrackEnabled: false,
+    }));
+
+    runInAction(() => (this.availableSatellites = satellites));
+    runInAction(() => {
+      this.availableSatellites.forEach((sat) =>
+        this.activeSatellitesMap.set(sat.satnum, {
+          groundTrackEnabled: false,
+          satelliteTrackingEnabled: false,
+        })
+      );
+    });
 
     console.log(this.availableSatellites);
+    console.log(this.activeSatellitesMap);
+  }
+
+  public async trackSatellite(satnum: string) {
+    // update activeSatellites Map
+    if (!this.activeSatellitesMap.has(satnum)) return;
+
+    this.activeSatellitesMap.get(satnum)!.satelliteTrackingEnabled = true;
+
+    // update list
+    let s = this.availableSatellites.findIndex(
+      (satellite) => satellite.satnum === satnum
+    );
+
+    if (s !== -1) {
+      this.availableSatellites[s].isActive = true;
+      this.subscribeToSatellite(satnum);
+    }
+  }
+
+  public async untrackSatellite(satnum: string) {
+    if (!this.activeSatellitesMap.has(satnum)) return;
+
+    this.activeSatellitesMap.get(satnum)!.satelliteTrackingEnabled = false;
+
+    let s = this.availableSatellites.findIndex(
+      (satellite) => satellite.satnum === satnum
+    );
+
+    if (s !== -1) {
+      this.availableSatellites[s].isActive = false;
+      await this.unsubscribeFromSatellite(satnum);
+    }
   }
 
   @observable.ref public availableSatellites: {
     name: string;
+    isActive: boolean;
+    isGroundTrackEnabled: boolean;
     satnum: string;
   }[] = [];
+  public activeSatellitesMap: Map<string, ActiveSatellite> = new Map();
+
   @observable public activeSatellites: { name: string; satnum: string }[] = [];
   @observable public groundStations: { value: string; label: string }[] = [];
 

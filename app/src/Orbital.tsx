@@ -7,6 +7,7 @@ import React, { Component } from "react";
 
 import Select from "react-select";
 import Listbox from "./components/listbox";
+import OrbitalChart from "./components/OrbitalChart";
 import "./Orbital.css";
 
 // Store
@@ -31,7 +32,10 @@ export class LogView extends Component<IProps, {}> {
     return (
       <>
         {toJS(this.props.store.log).map((log, index) => (
-          <p key={`${log.lat}-${log.lon}-${log.name}-${log.spd}`}>
+          <p
+            className="mfp-move-horizontal"
+            key={`${log.lat}-${log.lon}-${log.name}-${log.spd}`}
+          >
             &gt;{" "}
             <span className="payload">
               INC MSG <small>(redacted)</small>
@@ -56,7 +60,7 @@ function Orbital() {
         <div className="col-3 mt-4">
           <div className="row mb-3 line-on-side">
             <div className="col md-12 mb-3">
-              <small className="info">Ground Station</small>
+              <small className="headers">Ground Station</small>
               <div className="position">
                 <Select
                   theme={(theme) => ({
@@ -79,7 +83,7 @@ function Orbital() {
           </div>
           <div className="row mb-3 line-on-side">
             <div className="col md-12 mb-3">
-              <small className="info">Satellites</small>
+              <small className="headers">Satellites</small>
               <div className="mt-3">
                 <Listbox store={store} />
               </div>
@@ -87,16 +91,18 @@ function Orbital() {
           </div>
         </div>
         <div className="col-9 mt-4">
-          <div className="chart"></div>
+          <div className="chart">
+            <OrbitalChart />
+          </div>
         </div>
       </div>
-      <div className="row mt-3">
-        <div style={{ border: "2px solid red" }} className="col-7">
+      <div className="row footer mt-3">
+        <div className="col-7">
           <div className="log">
             <LogView store={store} />
           </div>
         </div>
-        <div style={{ border: "2px solid yellow" }} className="col">
+        <div className="col">
           <div className="info">{infoPanel()}</div>
         </div>
       </div>

@@ -6,6 +6,7 @@ import React, { useState } from "react";
 import { Store } from "../store";
 import { observer } from "mobx-react-lite";
 import { toJS } from "mobx";
+import { ActiveSatellite } from "../types";
 
 interface IListboxProps {
   store: Store;
@@ -17,11 +18,8 @@ const ListBox = observer((props: IListboxProps) => {
 
   let [alternate, setAlternate] = useState(true);
 
-  console.log(all);
-
   const handleOnInputChange = (value: string) => {
     setValue(value);
-    // setItems();
   };
 
   const handleAlternate = () => {
@@ -34,18 +32,26 @@ const ListBox = observer((props: IListboxProps) => {
 
   return (
     <>
+      <input
+        onChange={(e) => handleOnInputChange(e.target.value)}
+        className="search-listbox"
+        type="text"
+        id="fname"
+        name="fname"
+      ></input>
       <div className="listbox">
         <div className="elements">
-          <input
-            onChange={(e) => handleOnInputChange(e.target.value)}
-            className="search-listbox"
-            type="text"
-            id="fname"
-            name="fname"
-          ></input>
           {items.map((item) => (
             <>
-              <Item color={handleAlternate()} name={item.name} />
+              {/* <p>{item.isActive ? "true" : "false"}</p> */}
+              <Item
+                satelliteGroundTrackActive={item.isGroundTrackEnabled}
+                satelliteTrackingActive={item.isActive}
+                color={handleAlternate()}
+                name={item.name}
+                satnum={item.satnum}
+                store={props.store}
+              />
             </>
           ))}
         </div>
@@ -56,30 +62,54 @@ const ListBox = observer((props: IListboxProps) => {
 
 interface IItemProps {
   name: string;
+  satnum: string;
+  satelliteTrackingActive: boolean;
+  satelliteGroundTrackActive: boolean;
   color: string;
+  store: Store;
 }
 
 function Item(props: IItemProps) {
-  const [track, setTrack] = useState(false);
-  const [groundTrack, setGroundTrack] = useState(false);
+  const [track, setTrack] = useState(props.satelliteTrackingActive);
+  const [groundTrack, setGroundTrack] = useState(
+    props.satelliteGroundTrackActive
+  );
 
-  const handleOnTrackInputChange = (e: boolean) => {
+  const handleOnTrackInputChange = async (e: boolean) => {
     setTrack(e);
+
+    if (e) {
+      await props.store.trackSatellite(props.satnum);
+    } else {
+      await props.store.untrackSatellite(props.satnum);
+    }
   };
 
   const handleOnGroundTrackInputChange = (e: boolean) => {
-    if (!track) return;
+    if (!props.store.activeSatellitesMap.has(props.satnum)) return false;
+
+    const satellite = props.store.activeSatellitesMap.get(
+      props.satnum
+    ) as ActiveSatellite;
+    satellite.groundTrackEnabled = e;
 
     setGroundTrack(e);
   };
 
   return (
     <>
-      <div style={{ backgroundColor: props.color }} className="item">
+      <div
+        key={props.satnum}
+        style={{ backgroundColor: props.color }}
+        className="item"
+      >
         <label className="switch">
           <input
-            onChange={(e) => handleOnTrackInputChange(e.target.checked)}
+            onChange={async (e) =>
+              await handleOnTrackInputChange(e.target.checked)
+            }
             type="checkbox"
+            checked={props.satelliteTrackingActive}
           ></input>
           <span className="slider"></span>
         </label>{" "}
@@ -91,7 +121,7 @@ function Item(props: IItemProps) {
           id=""
           name=""
           value=""
-          disabled={!track}
+          checked={props.satelliteGroundTrackActive}
         ></input>
       </div>
     </>
