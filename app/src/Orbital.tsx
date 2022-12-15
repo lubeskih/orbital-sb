@@ -29,6 +29,15 @@ export class LogView extends Component<IProps, {}> {
   }
 
   render() {
+    if (this.props.store.log.length === 0) {
+      return (
+        <>
+          &gt; <span className="log-info">INFO</span> No satellite position data
+          received yet. Choose satellites to track.
+        </>
+      );
+    }
+
     return (
       <>
         {toJS(this.props.store.log).map((log, index) => (
@@ -54,11 +63,21 @@ export class LogView extends Component<IProps, {}> {
 function Orbital() {
   const client = store.getClient();
 
+  const handleOnSearchInputChange = (e: string) => {
+    if (!e) return;
+    // console.log("TUKA", e);
+    store.fetchGroundStation(e);
+  };
+
+  const getGs = () => {
+    return store.groundStations;
+  };
+
   return (
     <div className="container">
       <div className="row">
         <div className="col-3 mt-4">
-          <div className="row mb-3 line-on-side">
+          <div className="row mb-3 ground_station line-on-side">
             <div className="col md-12 mb-3">
               <small className="headers">Ground Station</small>
               <div className="position">
@@ -74,14 +93,14 @@ function Orbital() {
                   })}
                   className="enigma-type"
                   isDisabled={false}
-                  defaultValue={null}
-                  options={store.groundStations}
-                  onInputChange={(change) => console.log(change)}
+                  defaultValue={store.groundStations[0]}
+                  options={getGs()}
+                  onInputChange={(change) => handleOnSearchInputChange(change)}
                 />
               </div>
             </div>
           </div>
-          <div className="row mb-3 line-on-side">
+          <div className="row satellite_listbox line-on-side">
             <div className="col md-12 mb-3">
               <small className="headers">Satellites</small>
               <div className="mt-3">

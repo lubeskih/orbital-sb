@@ -24,6 +24,7 @@ export class Store {
     );
 
     this.fetchAvailableSatellites();
+    this.fetchGroundStation("A");
 
     makeAutoObservable(this);
   }
@@ -88,6 +89,7 @@ export class Store {
   };
 
   public async fetchGroundStation(searchString: string) {
+    console.log("Received search string ", searchString);
     this.groundStations = [];
 
     const { data, error } = await this.supabaseClient
@@ -103,11 +105,13 @@ export class Store {
       return;
     }
 
-    data.forEach((gs) => {
-      console.log(gs);
+    console.log("Received data ", data);
 
-      this.groundStations.push({ value: gs.name, label: gs.name });
-    });
+    runInAction(() =>
+      data.forEach((gs) =>
+        this.groundStations.push({ value: gs.name, label: gs.name })
+      )
+    );
   }
 
   public async fetchAvailableSatellites() {
@@ -184,7 +188,8 @@ export class Store {
   public activeSatellitesMap: Map<string, ActiveSatellite> = new Map();
 
   @observable public activeSatellites: { name: string; satnum: string }[] = [];
-  @observable public groundStations: { value: string; label: string }[] = [];
+  @observable.ref public groundStations: { value: string; label: string }[] =
+    [];
 
   @observable public currentGroundStations = [];
   @observable public selectedSatellite = null;

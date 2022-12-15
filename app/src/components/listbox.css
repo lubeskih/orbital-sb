@@ -11,12 +11,17 @@
   margin-bottom: 7px;
 }
 
+.search-listbox::placeholder {
+  font-size: 14px;
+  padding: 0px 0px 0px 15px;
+}
+
 .item-checkbox {
   position: relative;
   float: right;
   top: 0.6vh;
   right: 0.5vh;
-  background-color: #34b27b;
+  background-color: #181818;
 }
 .elements {
   padding: 0 0.5vh 0 0;
@@ -32,6 +37,7 @@
   overflow-y: scroll;
   height: 50vh;
   border: 2px solid rgb(177, 177, 177);
+  margin-top: 10px;
 }
 
 /* slider */
@@ -79,7 +85,7 @@
 }
 
 input:checked + .slider {
-  background-color: #34b27b;
+  background-color: #232936;
 }
 
 input:checked + .slider:before {

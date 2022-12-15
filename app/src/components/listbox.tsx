@@ -38,6 +38,7 @@ const ListBox = observer((props: IListboxProps) => {
         type="text"
         id="fname"
         name="fname"
+        placeholder="Filter ..."
       ></input>
       <div className="listbox">
         <div className="elements">

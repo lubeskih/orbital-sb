@@ -47,8 +47,10 @@ export const options = {
   scales: scales,
   maintainAspectRatio: false,
   responsive: true,
-  legend: {
-    display: false,
+  plugins: {
+    legend: {
+      display: false,
+    },
   },
 };
 

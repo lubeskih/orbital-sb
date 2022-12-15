@@ -10,8 +10,9 @@ body {
   /* width: 150vh;
   width: 100%;
   height: 100vh; */
-  border: 2px solid pink;
-  background-color: rgb(241, 241, 241);
+  /* border: 4px solid black; */
+  /* background-color: rgb(241, 241, 241); */
+  background-color: #ffffff;
 }
 
 .info {
@@ -22,7 +23,7 @@ body {
 }
 
 .line-on-side {
-  border: 0.5px solid #5cda09;
+  /* border: 0.5px solid #5cda09; */
   padding: 5px 0 0;
   margin: 0 auto;
 }
@@ -63,10 +64,10 @@ body {
 
 .headers {
   margin: 10px 10px 10px 0px;
-  background-color: #232936;
+  background-color: #ffffff;
   max-height: 20vh;
-  color: white;
-  padding: 6px;
+  color: rgb(12, 12, 12);
+  padding: 2px;
   font-family: "Ubuntu Mono";
   overflow-y: scroll;
 }
@@ -83,12 +84,28 @@ body {
   box-shadow: 5px 10px #acacac;
 }
 
-.footer {
-  margin-bottom: 5px;
+.satellite_listbox {
+  border: 1px solid black;
+  box-shadow: 5px 10px #acacac;
 }
 
-span {
+.ground_station {
+  border: 1px solid black;
+  box-shadow: 5px 10px #acacac;
+}
+
+.footer > .col {
+  margin-bottom: 10px;
+}
+
+.payload {
   background-color: #0f0f0f;
+  color: rgb(255, 255, 255);
+  padding: 2px;
+}
+
+.log-info {
+  background-color: #137188;
   color: rgb(255, 255, 255);
   padding: 2px;
 }
