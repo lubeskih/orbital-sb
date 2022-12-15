@@ -29,7 +29,7 @@ export class Store {
     makeAutoObservable(this);
   }
 
-  public async subscribeToSatellite(satnum: string) {
+  public async subscribeToSatellite(satnum: string, satelliteName?: string) {
     if (this.activeSatelliteSubscribtions.has(satnum)) {
       console.info("Aready subscribed to ", satnum);
       return;
@@ -55,14 +55,15 @@ export class Store {
 
           const { name, latitude, longitude, speed } = payload.new;
 
-          console.log(
-            `${name}: (${latitude}, ${longitude}) with ${speed} km/s`
-          );
           this.addToLog({
-            lat: latitude,
-            lon: longitude,
-            spd: speed,
-            name: name,
+            type: "incoming",
+            msg: `Incoming payload from ${name}`,
+            data: {
+              lat: latitude,
+              lon: longitude,
+              spd: speed,
+              name: name,
+            },
           });
         }
       )
@@ -70,16 +71,26 @@ export class Store {
 
     this.activeSatelliteSubscribtions.set(satnum, subscription);
     console.info("Subscribed to satellite ", satnum);
+    this.addToLog({
+      type: "info",
+      msg: `Connected. Now tracking ${satelliteName} (${satnum})`,
+    });
 
     return;
   }
 
-  public async unsubscribeFromSatellite(satnum: string) {
+  public async unsubscribeFromSatellite(
+    satnum: string,
+    satelliteName?: string
+  ) {
     if (this.activeSatelliteSubscribtions.has(satnum)) {
       await this.activeSatelliteSubscribtions.get(satnum)?.unsubscribe();
       this.activeSatelliteSubscribtions.delete(satnum);
 
-      console.info("Unsubscribed from satellite ", satnum);
+      this.addToLog({
+        type: "info",
+        msg: `Disconnected. Stopped tracking ${satelliteName} (${satnum}).`,
+      });
       return;
     }
   }
@@ -142,9 +153,6 @@ export class Store {
         })
       );
     });
-
-    console.log(this.availableSatellites);
-    console.log(this.activeSatellitesMap);
   }
 
   public async trackSatellite(satnum: string) {
@@ -160,7 +168,7 @@ export class Store {
 
     if (s !== -1) {
       this.availableSatellites[s].isActive = true;
-      this.subscribeToSatellite(satnum);
+      this.subscribeToSatellite(satnum, this.availableSatellites[s].name);
     }
   }
 
@@ -175,7 +183,10 @@ export class Store {
 
     if (s !== -1) {
       this.availableSatellites[s].isActive = false;
-      await this.unsubscribeFromSatellite(satnum);
+      await this.unsubscribeFromSatellite(
+        satnum,
+        this.availableSatellites[s].name
+      );
     }
   }
 
@@ -204,26 +215,32 @@ export class Store {
   // array se koristi vo listbox da se izrenderirash checked / uncheck
   // vo isto vreme se koristi vo mapata da znaeme dal se render ili ne
 
-  public log: {
+  public log: Log[] = observable.array([]);
+
+  addToLog = action((log: Log) => {
+    if (this.log.length > 9) {
+      this.log.pop();
+    }
+
+    // redact
+
+    if (log.data && log.type === "incoming") {
+      log.data.lat = parseFloat(log.data.lat).toPrecision(5).toString();
+      log.data.lon = parseFloat(log.data.lon).toPrecision(5).toString();
+      log.data.spd = parseFloat(log.data.spd).toPrecision(5).toString();
+    }
+
+    this.log.unshift(log);
+  });
+}
+
+interface Log {
+  type: "incoming" | "info";
+  msg?: string;
+  data?: {
     lat: string;
     lon: string;
     spd: string;
     name: string;
-  }[] = observable.array([]);
-
-  addToLog = action(
-    (data: { lat: string; lon: string; spd: string; name: string }) => {
-      if (this.log.length > 9) {
-        // TODO: first log on top instead
-        this.log.pop();
-      }
-
-      // redact
-      data.lat = parseFloat(data.lat).toPrecision(5).toString();
-      data.lon = parseFloat(data.lon).toPrecision(5).toString();
-      data.spd = parseFloat(data.spd).toPrecision(5).toString();
-
-      this.log.unshift(data);
-    }
-  );
+  };
 }

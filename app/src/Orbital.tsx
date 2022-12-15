@@ -3,7 +3,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import { toJS } from "mobx";
 
 import { observer } from "mobx-react";
-import React, { Component } from "react";
+import React, { Component, useEffect, useState } from "react";
 
 import Select from "react-select";
 import Listbox from "./components/listbox";
@@ -14,6 +14,8 @@ import banner from "./assets/banner.png";
 
 // Store
 import { Store } from "./store";
+import "moment-timezone";
+import moment from "moment";
 const store = new Store();
 
 interface ILogProps {
@@ -42,21 +44,34 @@ export class LogView extends Component<IProps, {}> {
 
     return (
       <>
-        {toJS(this.props.store.log).map((log, index) => (
-          <p
-            className="mfp-move-horizontal"
-            key={`${log.lat}-${log.lon}-${log.name}-${log.spd}`}
-          >
-            &gt;{" "}
-            <span className="payload">
-              INC MSG <small>(redacted)</small>
-            </span>
-            : <span className="satnum">SAT</span> {log.name}.{" "}
-            <span className="latitude">LAT</span> {log.lat}.{" "}
-            <span className="longitude">LON</span> {log.lon}.{" "}
-            <span className="speed">SPD</span> {log.spd} km/s{" "}
-          </p>
-        ))}
+        {toJS(this.props.store.log).map((log, index) => {
+          if (log.type === "info") {
+            return (
+              <p
+                key={`${log.type}-${index}-${log.msg}`}
+                className="mfp-move-horizontal"
+              >
+                &gt; <span className="log-info">INFO</span> {log.msg}
+              </p>
+            );
+          } else {
+            return (
+              <p
+                className="mfp-move-horizontal"
+                key={`${log.type}-${index}-${log.msg}-${log.data?.lat}-${log.data?.lon}-${log.data}`}
+              >
+                &gt;{" "}
+                <span className="payload">
+                  INC MSG <small>(redacted)</small>
+                </span>
+                : <span className="satnum">SAT</span> {log.data!.name}.{" "}
+                <span className="latitude">LAT</span> {log.data!.lat}.{" "}
+                <span className="longitude">LON</span> {log.data!.lon}.{" "}
+                <span className="speed">SPD</span> {log.data!.spd} km/s{" "}
+              </p>
+            );
+          }
+        })}
       </>
     );
   }
@@ -122,17 +137,26 @@ function Orbital() {
           </div>
         </div>
       </div>
-      {/* <div className="row mt-3">
+      <div className="row mt-4">
         <div className="col">
-          <div className="timezone">{timeZonePanel()}</div>
+          <div className="timezone">{timeZonePanel("Berlin")}</div>
         </div>
         <div className="col">
-          <div className="timezone">{timeZonePanel()}</div>
+          <div className="timezone">{timeZonePanel("Moscow")}</div>
         </div>
         <div className="col">
-          <div className="timezone">{timeZonePanel()}</div>
+          <div className="timezone">{timeZonePanel("Tokyo")}</div>
         </div>
-      </div> */}
+        <div className="col">
+          <div className="timezone">{timeZonePanel("London")}</div>
+        </div>
+        <div className="col">
+          <div className="timezone">{timeZonePanel("Server")}</div>
+        </div>
+        <div className="col">
+          <div className="timezone">{timeZonePanel("Local")}</div>
+        </div>
+      </div>
       <div className="row footer mt-3">
         <div className="col-7">
           <div className="log">
@@ -147,26 +171,123 @@ function Orbital() {
   );
 }
 
-function timeZonePanel() {
-  return (
-    <>
-      <p>local: August 6, Monday, 10:23:12 AM, 2022</p>
-    </>
-  );
+function timeZonePanel(panel: string) {
+  switch (panel) {
+    case "Berlin":
+      return (
+        <>
+          <span className="timezoneCity">Berlin</span>
+          <span className="timezoneTime">{Time("Berlin")}</span>
+        </>
+      );
+    case "Moscow":
+      return (
+        <>
+          <span className="timezoneCity">Moscow</span>
+          <span className="timezoneTime">{Time("Moscow")}</span>
+        </>
+      );
+    case "Tokyo":
+      return (
+        <>
+          <span className="timezoneCity">Tokyo</span>
+          <span className="timezoneTime">{Time("Tokyo")}</span>
+        </>
+      );
+    case "London":
+      return (
+        <>
+          <span className="timezoneCity">London</span>
+          <span className="timezoneTime">{Time("London")}</span>
+        </>
+      );
+    case "Server":
+      return (
+        <>
+          <span className="timezoneCity">Server</span>
+          <span className="timezoneTime">{Time("Server")}</span>
+        </>
+      );
+    default:
+      return (
+        <>
+          <span className="timezoneCity">Local</span>
+          <span className="timezoneTime">{Time("Local")}</span>
+        </>
+      );
+  }
 }
 
 function infoPanel() {
   return (
     <>
       Orbital. A real-time artificial satellite tracking software, written as
-      part of the Supabase Launch Week 6 Hackathon. Orbital is using Supabase
-      Realtime engine to update the satellite position and ground track in
-      real-time. For technical documentation regarding architecture and how it
-      works, check the docs. Repository. Written with ❤️ by{" "}
-      <a href="https://lh.mk">lh.mk</a>. Have fun using it as I had fun writing
-      it. :-)
+      part of the{" "}
+      <a href="https://supabase.com/blog/launch-week-6-hackathon">
+        Supabase Launch Week 6 Hackathon
+      </a>
+      . Orbital is using{" "}
+      <a href="https://supabase.com/docs/guides/realtime">Supabase Realtime</a>{" "}
+      engine to update the satellite position in real-time. For technical
+      documentation regarding architecture and how it works, visit the{" "}
+      <a href="https://github.com/lubeskih/orbital-sb/">docs</a>, or check the{" "}
+      <a href="https://github.com/lubeskih/orbital-sb/">repository on GitHub</a>
+      . Written with ❤️ by <a href="https://lh.mk">lh.mk</a>. Have fun using it
+      as I had fun writing it. :-)
     </>
   );
+}
+
+function Time(key: string) {
+  let tz = getTimeByKeyword(key);
+  let time: string = "";
+
+  if (tz === "UTC") {
+    time = moment().utc(false).format("LTS");
+  } else if (tz === "Local") {
+    time = moment().local(true).format("LTS");
+  } else {
+    time = moment().tz(tz).format("LTS");
+  }
+
+  const [clockState, setClockState] = useState(time);
+
+  useEffect(() => {
+    setInterval(() => {
+      let time: string = "";
+
+      if (tz === "UTC") {
+        time = moment().utc(false).format("LTS");
+      } else if (tz === "Local") {
+        time = moment().local(true).format("LTS");
+      } else {
+        time = moment().tz(tz).format("LTS");
+      }
+
+      setClockState(time);
+    }, 5000);
+  }, []);
+
+  return <>{clockState}</>;
+}
+
+function getTimeByKeyword(key: string) {
+  switch (key) {
+    case "Moscow":
+      return "Europe/Moscow";
+    case "Berlin":
+      return "Europe/Berlin";
+    case "Tokyo":
+      return "Asia/Tokyo";
+    case "London":
+      return "Europe/London";
+    case "Local":
+      return "Local";
+    case "Server":
+      return "UTC";
+    default:
+      return "UTC";
+  }
 }
 
 export default Orbital;

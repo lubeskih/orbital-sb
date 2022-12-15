@@ -5,17 +5,44 @@ body {
   background-color: rgb(22, 22, 22);
 }
 
+a {
+  color: white;
+}
+
+a:hover {
+  color: rgb(199, 199, 199);
+}
+
 .banner img {
   max-width: 100%;
   max-height: 100%;
   border: 1px solid black;
-  /* box-shadow: 5px 10px #797979; */
 }
 
 .timezone {
-  background-color: black;
-  max-height: 5vh;
-  height: 5vh;
+  background-color: white;
+  max-height: 3vh;
+  border: 1px solid black;
+  box-shadow: 5px 10px #494949;
+  display: flex;
+}
+
+.timezoneCity {
+  padding: 2px 5px 3px 5px;
+  background-color: #232936;
+  height: 100%;
+  color: white;
+  display: inline-block;
+  font-family: "Ubuntu Mono";
+}
+
+.timezoneTime {
+  font-family: "Ubuntu Mono";
+  margin: 0 auto;
+  /* float: right; */
+  width: 100%;
+  text-align: center;
+  /* display: flex; */
 }
 
 .container {
@@ -44,7 +71,7 @@ body {
   font-size: 1rem;
   line-height: normal;
   float: left;
-  font-family: Ubuntu Mono;
+  font-family: "Ubuntu Mono";
 }
 
 .log {
