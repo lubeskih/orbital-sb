@@ -10,6 +10,8 @@ import Listbox from "./components/listbox";
 import OrbitalChart from "./components/OrbitalChart";
 import "./Orbital.css";
 
+import banner from "./assets/banner.png";
+
 // Store
 import { Store } from "./store";
 const store = new Store();
@@ -77,6 +79,11 @@ function Orbital() {
     <div className="container">
       <div className="row">
         <div className="col-3 mt-4">
+          <div className="row banner">
+            <div className="col md-12 mb-3">
+              <img src={banner} alt="Orbital banner"></img>
+            </div>
+          </div>
           <div className="row mb-3 ground_station line-on-side">
             <div className="col md-12 mb-3">
               <small className="headers">Ground Station</small>
@@ -115,6 +122,17 @@ function Orbital() {
           </div>
         </div>
       </div>
+      {/* <div className="row mt-3">
+        <div className="col">
+          <div className="timezone">{timeZonePanel()}</div>
+        </div>
+        <div className="col">
+          <div className="timezone">{timeZonePanel()}</div>
+        </div>
+        <div className="col">
+          <div className="timezone">{timeZonePanel()}</div>
+        </div>
+      </div> */}
       <div className="row footer mt-3">
         <div className="col-7">
           <div className="log">
@@ -126,6 +144,14 @@ function Orbital() {
         </div>
       </div>
     </div>
+  );
+}
+
+function timeZonePanel() {
+  return (
+    <>
+      <p>local: August 6, Monday, 10:23:12 AM, 2022</p>
+    </>
   );
 }
 
