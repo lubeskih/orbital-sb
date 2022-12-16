@@ -132,7 +132,7 @@ function Orbital() {
         </div>
         <div className="col-9 mt-4">
           <div className="chart">
-            <OrbitalChart />
+            <OrbitalChart store={store} />
           </div>
         </div>
       </div>
@@ -252,19 +252,17 @@ function Time(key: string) {
   const [clockState, setClockState] = useState(time);
 
   useEffect(() => {
-    setInterval(() => {
-      let time: string = "";
-
-      if (tz === "UTC") {
-        time = moment().utc(false).format("LTS");
-      } else if (tz === "Local") {
-        time = moment().local(true).format("LTS");
-      } else {
-        time = moment().tz(tz).format("LTS");
-      }
-
-      setClockState(time);
-    }, 5000);
+    // setInterval(() => {
+    //   let time: string = "";
+    //   if (tz === "UTC") {
+    //     time = moment().utc(false).format("LTS");
+    //   } else if (tz === "Local") {
+    //     time = moment().local(true).format("LTS");
+    //   } else {
+    //     time = moment().tz(tz).format("LTS");
+    //   }
+    //   setClockState(time);
+    // }, 1000);
   }, []);
 
   return <>{clockState}</>;

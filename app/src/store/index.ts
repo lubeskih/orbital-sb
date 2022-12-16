@@ -1,8 +1,24 @@
 // Libraries
 import { action, makeAutoObservable, observable, runInAction } from "mobx";
+import { find, remove } from "lodash";
 
 import * as supabase from "@supabase/supabase-js";
 import { ActiveSatellite } from "../types";
+import { useRef } from "react";
+import { ChartJSOrUndefined } from "react-chartjs-2/dist/types";
+
+function createLinearHalfHiddenFn() {
+  let dir = true;
+  return (from: number, to: number, fraction: number) => {
+    if (fraction > 0.99 && dir) {
+      dir = false;
+    }
+    if (fraction < 0.01 && !dir) {
+      dir = true;
+    }
+    return dir ? fraction * to : 0;
+  };
+}
 
 /**
  * Application store
@@ -11,6 +27,86 @@ export class Store {
   private supabaseClient: supabase.SupabaseClient;
   private activeSatelliteSubscribtions: Map<string, supabase.RealtimeChannel> =
     new Map();
+  public activeSatellitesGroundTrackMap: Map<
+    string,
+    { lastUpdated?: number; data: { x: number; y: number }[][] }
+  > = new Map();
+  public chart: ChartJSOrUndefined;
+  public rgbaColors = [
+    "rgba(37, 150, 190,1)",
+    "rgba(50, 125, 168,1)",
+    "rgba(50, 168, 133,1)",
+    "rgba(119, 50, 168,1)",
+    "rgba(168, 50, 60,1)",
+  ];
+
+  public addDataSet(label: string, data: { x: number; y: number }[]) {
+    let color = Math.floor(Math.random() * this.rgbaColors.length);
+
+    let datasets = [
+      {
+        satnum: `${label}`,
+        label: `${label}`,
+        data: data,
+        radius: 5,
+        borderWidth: 0,
+        pointColor: "transparent",
+        pointBorderColor: this.rgbaColors[color],
+        backgroundColor: this.rgbaColors[color],
+        fill: true,
+        animations: {
+          radius: {
+            duration: 3000,
+            loop: false,
+            delay: 1000,
+            to: 50,
+            fn: createLinearHalfHiddenFn(),
+          },
+          numbers: { duration: 0 },
+          colors: {
+            type: "color",
+            duration: 3000,
+            delay: 1000,
+            to: "transparent",
+            loop: false,
+          },
+        },
+      },
+      {
+        label: `${label}`,
+        id: `${label}`,
+        data: data,
+        radius: 5,
+        borderWidth: 3,
+        pointColor: "transparent",
+        pointBorderColor: this.rgbaColors[color],
+        backgroundColor: this.rgbaColors[color],
+        fill: true,
+      },
+    ];
+
+    // check if exists, if so, delete first
+    // datasets.find()
+
+    const f = this.chart?.data.datasets.find((set) => set.label === label);
+    if (f) {
+      console.log("exists, removing");
+      remove(this.chart!.data.datasets, (set) => {
+        return set.label === label;
+      });
+    }
+
+    datasets.forEach((dataset) => {
+      this.chart?.data.datasets.push(dataset);
+      console.log("PUSHED ONE");
+    });
+
+    this.chart?.update();
+    console.log("UPDATED");
+    // this.chartRef.data.labels.push(label);
+    // this.chartRef.data.datasets.push(data)
+    return;
+  }
 
   constructor() {
     this.supabaseClient = supabase.createClient(
@@ -29,11 +125,23 @@ export class Store {
     makeAutoObservable(this);
   }
 
+  public getAllActiveSatelliteSatnums() {
+    return this.availableSatellites
+      .filter((satellite) => satellite.isActive)
+      .map((satellite) => ({
+        isActive: satellite.isActive,
+        satnum: satellite.satnum,
+        isGroundTrackEnabled: satellite.isGroundTrackEnabled,
+      }));
+  }
+
   public async subscribeToSatellite(satnum: string, satelliteName?: string) {
     if (this.activeSatelliteSubscribtions.has(satnum)) {
       console.info("Aready subscribed to ", satnum);
       return;
     }
+
+    await this.fetchSatelliteGroundTrack(satnum);
 
     const subscription = this.supabaseClient
       .channel(`public:satellite:satnum=eq.${satnum}`)
@@ -55,6 +163,10 @@ export class Store {
 
           const { name, latitude, longitude, speed } = payload.new;
 
+          console.log(payload);
+          // const j = JSON.parse(ground_track);
+          // console.log(j[0]);
+
           this.addToLog({
             type: "incoming",
             msg: `Incoming payload from ${name}`,
@@ -65,6 +177,8 @@ export class Store {
               name: name,
             },
           });
+
+          this.addDataSet(satnum, [{ x: longitude, y: latitude }]);
         }
       )
       .subscribe();
@@ -87,10 +201,20 @@ export class Store {
       await this.activeSatelliteSubscribtions.get(satnum)?.unsubscribe();
       this.activeSatelliteSubscribtions.delete(satnum);
 
+      const f = this.chart?.data.datasets.find((set) => set.label === satnum);
+      if (f) {
+        console.log("exists, removing");
+        remove(this.chart!.data.datasets, (set) => {
+          return set.label === satnum;
+        });
+      }
+
       this.addToLog({
         type: "info",
         msg: `Disconnected. Stopped tracking ${satelliteName} (${satnum}).`,
       });
+
+      this.chart!.update();
       return;
     }
   }
@@ -123,6 +247,36 @@ export class Store {
         this.groundStations.push({ value: gs.name, label: gs.name })
       )
     );
+  }
+
+  public async fetchSatelliteGroundTrack(satnum: string) {
+    const { data, error } = await this.supabaseClient
+      .from("satellite")
+      .select("ground_track")
+      .eq("satnum", `${satnum}`)
+      .limit(1);
+
+    if (error) {
+      console.error(
+        `Error while fetching ground track for satellite ${satnum}. Error ${error.message}`
+      );
+      return;
+    }
+
+    const { ground_track } = data[0];
+    const parsed = JSON.parse(ground_track) as { x: number; y: number }[][];
+
+    if (this.activeSatellitesGroundTrackMap.has(satnum)) {
+      this.activeSatellitesGroundTrackMap.set(satnum, {
+        ...this.activeSatellitesGroundTrackMap.get(satnum),
+        data: parsed,
+      });
+    } else {
+      this.activeSatellitesGroundTrackMap.set(satnum, {
+        lastUpdated: Date.now(),
+        data: parsed,
+      });
+    }
   }
 
   public async fetchAvailableSatellites() {
@@ -232,6 +386,8 @@ export class Store {
 
     this.log.unshift(log);
   });
+
+  // ChartJS
 }
 
 interface Log {
