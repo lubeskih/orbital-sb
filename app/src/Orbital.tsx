@@ -82,7 +82,6 @@ function Orbital() {
 
   const handleOnSearchInputChange = (e: string) => {
     if (!e) return;
-    // console.log("TUKA", e);
     store.fetchGroundStation(e);
   };
 
