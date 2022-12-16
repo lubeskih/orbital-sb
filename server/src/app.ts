@@ -3,7 +3,12 @@ import express from 'express';
 import * as sgp from 'sgp4';
 import fetch from 'cross-fetch';
 
-import { calculateSatelliteData, parseElements } from './util';
+import {
+    calculateSatelliteData,
+    calculateSatelliteGroundTrack,
+    parseElements,
+    prepareSatelliteObject,
+} from './util';
 import { Satellite } from './types';
 
 import * as pg from 'pg';
@@ -45,12 +50,13 @@ async function init() {
     console.log('[+] Connecting to PostgreSQL ...');
     await pg_client.connect();
 
+    await recalculateAndUpdateSatelliteGroundTrack();
     // recalculateAndUpdateDbSatellites();
-    setInterval(recalculateAndUpdateDbSatellites, 1000);
+    // setInterval(recalculateAndUpdateDbSatellites, 5000);
     // setInterval(updateTleSets, 1000 * 60 * 60 * 5);
 }
 
-app.listen(3001, () => {
+app.listen(3001, async () => {
     console.log(`Express is listening at http://localhost:${port}`);
 
     init();
@@ -107,6 +113,32 @@ async function updateTleSets() {
 
     for (let i = 0; i < satellites.length; i++) {
         updateSatelliteElements(satellites[i]);
+    }
+}
+
+async function recalculateAndUpdateSatelliteGroundTrack() {
+    try {
+        const tleSets = await fetchTwoLineElements();
+
+        for (let i = 0; i < tleSets.length; i++) {
+            const set = tleSets[i];
+
+            let satellite = prepareSatelliteObject(
+                set.name,
+                set.tle_line_one,
+                set.tle_line_two,
+            );
+
+            // calculate satellite data
+            const calculatedSatelliteGroundTrack =
+                calculateSatelliteGroundTrack(satellite);
+
+            // TODO: UPDATE groundtrack per satellite (jsonb)
+        }
+    } catch (error) {
+        console.error(
+            `Error while updating satellite ground track. Error: ${error}`,
+        );
     }
 }
 
@@ -180,25 +212,6 @@ async function updateSatellitePosition(satellite: Satellite) {
             `Cannot update position for satellite ${satellite.name}. Error: ${error.stack}`,
         );
     }
-}
-
-function prepareSatelliteObject(
-    name: string,
-    tle_line_one: string,
-    tle_line_two: string,
-): Satellite & Record<string, any> {
-    let constants = sgp.twoline2rv(tle_line_one, tle_line_two, sgp.wgs84());
-
-    constants.name = name;
-    constants.tle_line_one = tle_line_one;
-    constants.tle_line_two = tle_line_two;
-    constants.inclination = constants.inclo;
-    constants.satellite_number = constants.satnum;
-    constants.epoch_days = constants.satnum;
-    constants.latitude = 0;
-    constants.longitude = 0;
-
-    return constants;
 }
 
 // fetch all TLE from satellite tabl
