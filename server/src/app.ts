@@ -6,6 +6,7 @@ import fetch from 'cross-fetch';
 import {
     calculateSatelliteData,
     calculateSatelliteGroundTrack,
+    GroundTrackSlices,
     parseElements,
     prepareSatelliteObject,
 } from './util';
@@ -50,9 +51,9 @@ async function init() {
     console.log('[+] Connecting to PostgreSQL ...');
     await pg_client.connect();
 
-    await recalculateAndUpdateSatelliteGroundTrack();
+    // await recalculateAndUpdateSatelliteGroundTrack();
     // recalculateAndUpdateDbSatellites();
-    // setInterval(recalculateAndUpdateDbSatellites, 5000);
+    setInterval(recalculateAndUpdateDbSatellites, 5000);
     // setInterval(updateTleSets, 1000 * 60 * 60 * 5);
 }
 
@@ -134,10 +135,33 @@ async function recalculateAndUpdateSatelliteGroundTrack() {
                 calculateSatelliteGroundTrack(satellite);
 
             // TODO: UPDATE groundtrack per satellite (jsonb)
+            await updateSatelliteGroundTrack(
+                satellite.satnum,
+                calculatedSatelliteGroundTrack,
+            );
         }
     } catch (error) {
         console.error(
             `Error while updating satellite ground track. Error: ${error}`,
+        );
+    }
+}
+
+async function updateSatelliteGroundTrack(
+    satnum: string,
+    gt: GroundTrackSlices,
+) {
+    const gtString = JSON.stringify(gt);
+    const text =
+        'UPDATE public.satellite SET ground_track = $1 WHERE satnum = $2;';
+    const values = [gtString, satnum];
+
+    try {
+        await pg_client.query(text, values);
+        console.log(`Updated ground track for ${satnum}.`);
+    } catch (error) {
+        console.error(
+            `Cannot update ground track for satellite ${satnum}. Error: ${error.stack}`,
         );
     }
 }

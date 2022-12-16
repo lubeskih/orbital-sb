@@ -106,12 +106,12 @@ export async function calculateSatelliteData(
     } as Satellite);
 }
 
-type GroundTrackSlices = {
+export type GroundTrackSlices = {
     x: number;
     y: number;
 }[][];
 
-type GroundTrack = {
+export type GroundTrack = {
     x: number;
     y: number;
 }[];
@@ -219,7 +219,7 @@ export function calculateFullGroundTrack(
     tle_2: string,
 ): GroundTrack {
     const groundTrack: GroundTrack = [];
-    let minutesInTheFuture = 300;
+    let minutesInTheFuture = 180;
 
     let satellite = prepareSatelliteObject(name, tle_1, tle_2);
 
