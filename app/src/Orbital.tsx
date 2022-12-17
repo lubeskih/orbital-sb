@@ -85,6 +85,12 @@ function Orbital() {
     store.fetchGroundStation(e);
   };
 
+  const handleOnGroundStationChange = (groundStation?: string) => {
+    if (!groundStation) return;
+
+    store.updateGroundStation(groundStation);
+  };
+
   const getGs = () => {
     return store.groundStations;
   };
@@ -116,6 +122,9 @@ function Orbital() {
                   isDisabled={false}
                   defaultValue={store.groundStations[0]}
                   options={getGs()}
+                  onChange={(change) =>
+                    handleOnGroundStationChange(change?.value)
+                  }
                   onInputChange={(change) => handleOnSearchInputChange(change)}
                 />
               </div>
