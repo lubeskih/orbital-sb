@@ -28,7 +28,9 @@ const ListBox = observer((props: IListboxProps) => {
     return color;
   };
 
-  const items = all.filter((item) => item.name.includes(value));
+  const items = all.filter((item) =>
+    item.name.toLowerCase().includes(value.toLowerCase())
+  );
 
   return (
     <>
@@ -95,6 +97,14 @@ function Item(props: IItemProps) {
     satellite.groundTrackEnabled = e;
 
     setGroundTrack(e);
+
+    if (e) {
+      // show ground track
+      props.store.showSatelliteGroundTrack(props.satnum);
+    } else {
+      // hide/remove ground track
+      props.store.hideSatelliteGroundTrack(props.satnum);
+    }
   };
 
   return (
@@ -122,7 +132,7 @@ function Item(props: IItemProps) {
           id=""
           name=""
           value=""
-          checked={props.satelliteGroundTrackActive}
+          checked={groundTrack}
         ></input>
       </div>
     </>

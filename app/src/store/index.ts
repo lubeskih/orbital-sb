@@ -40,6 +40,59 @@ export class Store {
     "rgba(168, 50, 60,1)",
   ];
 
+  public async showSatelliteGroundTrack(satnum: string) {
+    if (!this.activeSatellitesGroundTrackMap.has(satnum)) return;
+
+    const label = `${satnum}-ground-track`;
+
+    const gt = this.activeSatellitesGroundTrackMap.get(satnum);
+    let color = Math.floor(Math.random() * this.rgbaColors.length);
+
+    let gtSets = gt!.data.map((data) => {
+      return {
+        satnum: label,
+        label: label,
+        data: data,
+        order: 1,
+        showLine: true,
+        borderWidth: 2,
+        pointRadius: 1,
+        fill: false,
+        borderColor: this.rgbaColors[color],
+      };
+    });
+
+    const f = this.chart?.data.datasets.find((set) => set.label === label);
+    if (f) {
+      remove(this.chart!.data.datasets, (set) => {
+        return set.label === label;
+      });
+    }
+
+    gtSets.forEach((dataset) => {
+      this.chart?.data.datasets.push(dataset);
+    });
+
+    this.chart?.update();
+
+    return;
+  }
+
+  public async hideSatelliteGroundTrack(satnum: string) {
+    if (!this.activeSatellitesGroundTrackMap.has(satnum)) return;
+
+    const label = `${satnum}-ground-track`;
+
+    const f = this.chart?.data.datasets.find((set) => set.label === label);
+    if (f) {
+      remove(this.chart!.data.datasets, (set) => {
+        return set.label === label;
+      });
+    }
+
+    this.chart?.update();
+  }
+
   public addDataSet(label: string, data: { x: number; y: number }[]) {
     let color = Math.floor(Math.random() * this.rgbaColors.length);
 
@@ -143,6 +196,11 @@ export class Store {
 
     await this.fetchSatelliteGroundTrack(satnum);
 
+    this.addToLog({
+      type: "info",
+      msg: `Establishing connection to ${satelliteName} (${satnum}) ...`,
+    });
+
     const subscription = this.supabaseClient
       .channel(`public:satellite:satnum=eq.${satnum}`)
       .on(
@@ -164,8 +222,6 @@ export class Store {
           const { name, latitude, longitude, speed } = payload.new;
 
           console.log(payload);
-          // const j = JSON.parse(ground_track);
-          // console.log(j[0]);
 
           this.addToLog({
             type: "incoming",
@@ -178,7 +234,7 @@ export class Store {
             },
           });
 
-          this.addDataSet(satnum, [{ x: longitude, y: latitude }]);
+          this.addDataSet(`${satnum}`, [{ x: longitude, y: latitude }]);
         }
       )
       .subscribe();
@@ -211,7 +267,7 @@ export class Store {
 
       this.addToLog({
         type: "info",
-        msg: `Disconnected. Stopped tracking ${satelliteName} (${satnum}).`,
+        msg: `Disconnected. Connection to ${satelliteName} (${satnum}) closed.`,
       });
 
       this.chart!.update();
