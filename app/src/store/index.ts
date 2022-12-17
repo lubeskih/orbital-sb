@@ -33,6 +33,14 @@ export class Store {
     string,
     { lastUpdated?: number; data: { x: number; y: number }[][] }
   > = new Map();
+  public satelliteChartMetadata: Map<
+    string,
+    {
+      image: string;
+      color: string;
+      groundTrackColor: string;
+    }
+  > = new Map();
   public chart: ChartJSOrUndefined;
   public rgbaColors = [
     "rgba(37, 150, 190,1)",
@@ -58,7 +66,15 @@ export class Store {
     const label = `${satnum}-ground-track`;
 
     const gt = this.activeSatellitesGroundTrackMap.get(satnum);
-    let color = Math.floor(Math.random() * this.rgbaColors.length);
+
+    let color: string;
+
+    if (this.satelliteChartMetadata.has(satnum)) {
+      const metadata = this.satelliteChartMetadata.get(satnum);
+      color = metadata!.color;
+    } else {
+      return;
+    }
 
     let gtSets = gt!.data.map((data) => {
       return {
@@ -73,7 +89,7 @@ export class Store {
         borderWidth: 2,
         pointRadius: 0,
         fill: false,
-        borderColor: this.rgbaColorsGt[color],
+        borderColor: color,
       };
     });
 
@@ -113,10 +129,28 @@ export class Store {
     data: { x: number; y: number }[],
     satelliteName: string
   ) {
-    let color = Math.floor(Math.random() * this.rgbaColors.length);
-    let imageIndex = Math.floor(Math.random() * this.satelliteImages.length);
     let satImage = new Image();
-    satImage.src = this.satelliteImages[imageIndex];
+    let color: string;
+
+    if (this.satelliteChartMetadata.has(label)) {
+      const metadata = this.satelliteChartMetadata.get(label);
+      satImage.src = metadata!.image;
+      color = metadata!.color;
+    } else {
+      // register
+      color =
+        this.rgbaColors[Math.floor(Math.random() * this.rgbaColors.length)];
+      let image =
+        this.satelliteImages[
+          Math.floor(Math.random() * this.satelliteImages.length)
+        ];
+      satImage.src = image;
+      this.satelliteChartMetadata.set(label, {
+        color: color,
+        groundTrackColor: color,
+        image: image,
+      });
+    }
 
     let datasets = [
       {
@@ -126,8 +160,8 @@ export class Store {
         radius: 0,
         borderWidth: 2,
         pointColor: "transparent",
-        pointBorderColor: this.rgbaColors[color],
-        backgroundColor: this.rgbaColors[color],
+        pointBorderColor: color,
+        backgroundColor: color,
         fill: true,
         datalabels: {
           display: false,
@@ -162,8 +196,8 @@ export class Store {
         radius: 1,
         borderWidth: 0,
         pointColor: "transparent",
-        pointBorderColor: this.rgbaColors[color],
-        backgroundColor: this.rgbaColors[color],
+        pointBorderColor: color,
+        backgroundColor: color,
         fill: true,
       },
     ];
@@ -173,7 +207,6 @@ export class Store {
 
     const f = this.chart?.data.datasets.find((set) => set.label === label);
     if (f) {
-      console.log("exists, removing");
       remove(this.chart!.data.datasets, (set) => {
         return set.label === label;
       });
@@ -181,13 +214,9 @@ export class Store {
 
     datasets.forEach((dataset) => {
       this.chart?.data.datasets.push(dataset);
-      console.log("PUSHED ONE");
     });
 
     this.chart?.update();
-    console.log("UPDATED");
-    // this.chartRef.data.labels.push(label);
-    // this.chartRef.data.datasets.push(data)
     return;
   }
 
@@ -305,8 +334,13 @@ export class Store {
       });
 
       this.chart!.update();
-      return;
     }
+
+    if (this.satelliteChartMetadata.has(satnum)) {
+      this.satelliteChartMetadata.delete(satnum);
+    }
+
+    return;
   }
 
   public getClient = () => {
