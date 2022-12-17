@@ -1,11 +1,13 @@
 // Libraries
 import { action, makeAutoObservable, observable, runInAction } from "mobx";
-import { find, remove } from "lodash";
+import { remove } from "lodash";
 
 import * as supabase from "@supabase/supabase-js";
 import { ActiveSatellite } from "../types";
-import { useRef } from "react";
 import { ChartJSOrUndefined } from "react-chartjs-2/dist/types";
+
+import satone from "../assets/satone.png";
+import sattwo from "../assets/sattwo.png";
 
 function createLinearHalfHiddenFn() {
   let dir = true;
@@ -47,6 +49,8 @@ export class Store {
     "rgba(119, 50, 168,0.5)",
     "rgba(168, 50, 60,0.5)",
   ];
+
+  public satelliteImages = [satone, sattwo];
 
   public async showSatelliteGroundTrack(satnum: string) {
     if (!this.activeSatellitesGroundTrackMap.has(satnum)) return;
@@ -110,13 +114,17 @@ export class Store {
     satelliteName: string
   ) {
     let color = Math.floor(Math.random() * this.rgbaColors.length);
+    let imageIndex = Math.floor(Math.random() * this.satelliteImages.length);
+    let satImage = new Image();
+    satImage.src = this.satelliteImages[imageIndex];
+
     let datasets = [
       {
         name: `${satelliteName}`,
         label: `${label}`,
         data: data,
-        radius: 5,
-        borderWidth: 0,
+        radius: 0,
+        borderWidth: 2,
         pointColor: "transparent",
         pointBorderColor: this.rgbaColors[color],
         backgroundColor: this.rgbaColors[color],
@@ -124,6 +132,7 @@ export class Store {
         datalabels: {
           display: false,
         },
+        order: 2,
         animations: {
           radius: {
             duration: 3000,
@@ -148,9 +157,10 @@ export class Store {
         datalabels: {
           display: true,
         },
+        pointStyle: satImage,
         data: data,
-        radius: 5,
-        borderWidth: 3,
+        radius: 1,
+        borderWidth: 0,
         pointColor: "transparent",
         pointBorderColor: this.rgbaColors[color],
         backgroundColor: this.rgbaColors[color],

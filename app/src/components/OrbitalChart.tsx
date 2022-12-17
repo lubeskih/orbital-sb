@@ -66,14 +66,13 @@ export const options = {
     },
     datalabels: {
       formatter: function (_value: any, context: any) {
-        console.log("FROM CTX", context.dataset.name);
         return context.dataset.name;
       },
       color: "#000",
       backgroundColor: "rgba(255,255,255,0.5)",
       padding: 1,
       align: "bottom",
-      offset: 15,
+      offset: 20,
       font: {
         family: "Ubuntu Mono",
       },
