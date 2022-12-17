@@ -1,5 +1,7 @@
 // @ts-nocheck
 import { Scatter } from "react-chartjs-2";
+import ChartDataLabels from "chartjs-plugin-datalabels";
+
 import day from "../assets/day.png";
 
 import { useRef, useEffect } from "react";
@@ -22,7 +24,14 @@ const LATITUDE_MIN = -90;
 const LATITUDE_MAX = 90;
 const LATITUDE_TICKS = 7;
 
-ChartJS.register(LinearScale, PointElement, LineElement, Tooltip, Legend);
+ChartJS.register(
+  ChartDataLabels,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Tooltip,
+  Legend
+);
 
 export const scales = {
   x: {
@@ -55,7 +64,22 @@ export const options = {
     legend: {
       display: false,
     },
+    datalabels: {
+      formatter: function (_value: any, context: any) {
+        console.log("FROM CTX", context.dataset.name);
+        return context.dataset.name;
+      },
+      color: "#000",
+      backgroundColor: "rgba(255,255,255,0.5)",
+      padding: 1,
+      align: "bottom",
+      offset: 15,
+      font: {
+        family: "Ubuntu Mono",
+      },
+    },
   },
+  hover: { mode: null },
   transitions: {},
   elements: {
     point: {
@@ -101,7 +125,7 @@ const OrbitalChart = (props: IChartProps) => {
   return (
     <Scatter
       ref={chartRef}
-      plugins={[imgPlugin]}
+      plugins={[imgPlugin, ChartDataLabels]}
       options={options}
       data={{ datasets: [] }}
     />

@@ -40,6 +40,14 @@ export class Store {
     "rgba(168, 50, 60,1)",
   ];
 
+  public rgbaColorsGt = [
+    "rgba(37, 150, 190,0.5)",
+    "rgba(50, 125, 168,0.5)",
+    "rgba(50, 168, 133,0.5)",
+    "rgba(119, 50, 168,0.5)",
+    "rgba(168, 50, 60,0.5)",
+  ];
+
   public async showSatelliteGroundTrack(satnum: string) {
     if (!this.activeSatellitesGroundTrackMap.has(satnum)) return;
 
@@ -54,11 +62,14 @@ export class Store {
         label: label,
         data: data,
         order: 1,
+        datalabels: {
+          display: false,
+        },
         showLine: true,
         borderWidth: 2,
-        pointRadius: 1,
+        pointRadius: 0,
         fill: false,
-        borderColor: this.rgbaColors[color],
+        borderColor: this.rgbaColorsGt[color],
       };
     });
 
@@ -93,12 +104,15 @@ export class Store {
     this.chart?.update();
   }
 
-  public addDataSet(label: string, data: { x: number; y: number }[]) {
+  public addDataSet(
+    label: string,
+    data: { x: number; y: number }[],
+    satelliteName: string
+  ) {
     let color = Math.floor(Math.random() * this.rgbaColors.length);
-
     let datasets = [
       {
-        satnum: `${label}`,
+        name: `${satelliteName}`,
         label: `${label}`,
         data: data,
         radius: 5,
@@ -107,6 +121,9 @@ export class Store {
         pointBorderColor: this.rgbaColors[color],
         backgroundColor: this.rgbaColors[color],
         fill: true,
+        datalabels: {
+          display: false,
+        },
         animations: {
           radius: {
             duration: 3000,
@@ -126,8 +143,11 @@ export class Store {
         },
       },
       {
+        name: `${satelliteName}`,
         label: `${label}`,
-        id: `${label}`,
+        datalabels: {
+          display: true,
+        },
         data: data,
         radius: 5,
         borderWidth: 3,
@@ -188,7 +208,7 @@ export class Store {
       }));
   }
 
-  public async subscribeToSatellite(satnum: string, satelliteName?: string) {
+  public async subscribeToSatellite(satnum: string, satelliteName: string) {
     if (this.activeSatelliteSubscribtions.has(satnum)) {
       console.info("Aready subscribed to ", satnum);
       return;
@@ -234,7 +254,11 @@ export class Store {
             },
           });
 
-          this.addDataSet(`${satnum}`, [{ x: longitude, y: latitude }]);
+          this.addDataSet(
+            `${satnum}`,
+            [{ x: longitude, y: latitude }],
+            satelliteName
+          );
         }
       )
       .subscribe();
