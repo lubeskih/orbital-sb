@@ -1,11 +1,18 @@
-import { round } from "lodash";
 import moment from "moment";
 
 import worldDay from "./assets/day.png";
 import worldNight from "./assets/world-night.png";
 
-export function generateDayNightMap(): HTMLImageElement {
-  let mktime = Date.now() / 1000;
+async function loadImage(url: string, elem: any) {
+  return new Promise((resolve, reject) => {
+    elem.onload = () => resolve(elem);
+    elem.onerror = reject;
+    elem.src = url;
+  });
+}
+
+// Uses math from http://www.edesign.nl/2009/05/14/math-behind-a-world-sunlight-map/
+export async function generateDayNightMap() {
   let daysInyear = 365;
   let mapOffset = 0;
 
@@ -13,20 +20,34 @@ export function generateDayNightMap(): HTMLImageElement {
   let m = moment().minute();
   let s = moment().second();
 
-  let curretntDateTime = moment().format();
-  let timezoneOffset = moment().utcOffset(curretntDateTime).second();
+  let currentDateTime = moment().format();
+  let timezoneOffset = 3600;
+
+  // console.log("Hour: ", t);
+  // console.log("Minute: ", m);
+  // console.log("Seconds: ", s);
+
+  // console.log("CurrentDateTime: ", currentDateTime);
+  // console.log("Timezone Offset: ", timezoneOffset);
 
   let time = t + m / 60 + s / 3600;
 
+  // console.log("Time 1: ", time);
+
   time = time + 24 + 6 - timezoneOffset / 3600 - mapOffset;
 
+  // console.log("Time 2: ", time)
+
   let dayOfYear = moment().dayOfYear();
+  // console.log("Day of year: ", dayOfYear);
 
   while (time > 24) {
     time = time - 24;
   }
 
   time = time / 24;
+
+  // console.log("Time 3: ", time);
 
   let pointingFromEarthToSun = new Vec3(
     Math.sin(2 * Math.PI * time),
@@ -36,23 +57,70 @@ export function generateDayNightMap(): HTMLImageElement {
   let tilt = 23.5 * Math.cos((2 * Math.PI * (dayOfYear - 173)) / daysInyear);
   let seasonOffset = new Vec3(0, Math.tan(Math.PI * 2 * (tilt / 360)), 0);
 
+  // console.log("X", pointingFromEarthToSun.x);
+  // console.log("Y", pointingFromEarthToSun.y);
+  // console.log("Z", pointingFromEarthToSun.z);
+
+  // console.log("ttlt", tilt);
+
+  // console.log("offset seasons", seasonOffset);
+
   pointingFromEarthToSun = pointingFromEarthToSun.add(seasonOffset);
 
-  let earthDay = new Image();
-  earthDay.src = worldDay;
+  // console.log("NEW: ", pointingFromEarthToSun);
 
-  let earthNight = new Image();
-  earthNight.src = worldNight;
+  let earthDay = new Image(2048, 1024);
+  let earthNight = new Image(2048, 1024);
 
-  let maxU = earthDay.width;
-  let maxV = earthDay.height;
+  // earthDay.src = worldDay;
+  await loadImage(worldDay, earthDay);
+  await loadImage(worldNight, earthNight);
+
+  let maxU = 2048;
+  let maxV = 1024;
 
   let doubleMaxV = maxV * 2;
 
+  // console.log("MAX", maxU, maxV, doubleMaxV);
+
   pointingFromEarthToSun.normalize(1);
 
-  for (let u = 0; u < round(maxU); u++) {
-    for (let v = 0; v < round(maxV); v++) {
+  // console.log("NEWEST ",  pointingFromEarthToSun);
+
+  // var canvasEdited = document.getElementById("canvasEdited");
+  let canvasDay = document.createElement("CANVAS") as HTMLCanvasElement;
+  canvasDay.id = "1";
+  let canvasNight = document.createElement("CANVAS") as HTMLCanvasElement;
+  canvasNight.id = "2";
+
+  let ctxDay = canvasDay.getContext("2d") as CanvasRenderingContext2D;
+  let ctxNight = canvasNight.getContext("2d") as CanvasRenderingContext2D;
+
+  ctxDay.canvas.width = 2048;
+  ctxDay.canvas.height = 1024;
+
+  ctxNight.canvas.width = 2048;
+  ctxNight.canvas.height = 1024;
+
+  ctxDay.drawImage(earthDay, 0, 0, canvasDay.width, canvasDay.height);
+  ctxNight.drawImage(earthNight, 0, 0, canvasNight.width, canvasNight.height);
+
+  let dayImageData = ctxDay.getImageData(
+    0,
+    0,
+    canvasDay.width,
+    canvasDay.height
+  ) as any;
+
+  let nightImageData = ctxNight.getImageData(
+    0,
+    0,
+    canvasNight.width,
+    canvasNight.height
+  ) as any;
+
+  for (let u = 0; u < 2048; u++) {
+    for (let v = 0; v < 1024; v++) {
       let phi = (v / doubleMaxV - 1) * (2 * Math.PI); // latitude
       let theta = (u / maxU) * (2 * Math.PI); // longitude
 
@@ -67,13 +135,33 @@ export function generateDayNightMap(): HTMLImageElement {
         pointingFromEarthToSun.dot(earthNormal);
 
       if (angle_between_surface_and_sunlight <= -0.1) {
-        // draw pixels ???
+        let colorIndices = getColorIndicesForCoord(u, v, 2048);
+        dayImageData.data[colorIndices[0]] =
+          nightImageData.data[colorIndices[0]];
+        dayImageData.data[colorIndices[1]] =
+          nightImageData.data[colorIndices[1]];
+        dayImageData.data[colorIndices[2]] =
+          nightImageData.data[colorIndices[2]];
+        dayImageData.data[colorIndices[3]] =
+          nightImageData.data[colorIndices[3]];
       }
     }
   }
 
-  return new Image();
+  ctxDay.putImageData(dayImageData, 0, 0);
+  let base64URI = canvasDay.toDataURL("image/png");
+
+  let i = new Image(2048, 1024);
+  i.src = base64URI;
+  await loadImage(base64URI, i);
+
+  return i;
 }
+
+const getColorIndicesForCoord = (x: number, y: number, width: number) => {
+  const red = y * (width * 4) + x * 4;
+  return [red, red + 1, red + 2, red + 3];
+};
 
 class Vec3 {
   public x = 0;
@@ -87,7 +175,7 @@ class Vec3 {
   }
 
   public dot(v: Vec3) {
-    let dot = this.x * v.x + this.y * v.y + (this.z + v.z);
+    let dot = this.x * v.x + this.y * v.y + this.z * v.z;
     return dot;
   }
 

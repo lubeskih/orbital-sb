@@ -4,11 +4,11 @@ import { remove } from "lodash";
 
 import * as supabase from "@supabase/supabase-js";
 import { ActiveSatellite } from "../types";
-import { ChartJSOrUndefined } from "react-chartjs-2/dist/types";
 
 import satone from "../assets/satone.png";
 import sattwo from "../assets/sattwo.png";
 import antenna from "../assets/antenna.png";
+import React from "react";
 
 function createLinearHalfHiddenFn() {
   let dir = true;
@@ -42,7 +42,6 @@ export class Store {
       groundTrackColor: string;
     }
   > = new Map();
-  public chart: ChartJSOrUndefined;
   public rgbaColors = [
     "rgba(37, 150, 190,1)",
     "rgba(50, 125, 168,1)",
@@ -58,6 +57,8 @@ export class Store {
     "rgba(119, 50, 168,0.5)",
     "rgba(168, 50, 60,0.5)",
   ];
+  public image: HTMLImageElement = new Image();
+  public chart: any = React.createRef();
 
   public satelliteImages = [satone, sattwo];
 
@@ -108,18 +109,20 @@ export class Store {
       };
     });
 
-    const f = this.chart?.data.datasets.find((set) => set.label === label);
+    const f = this.chart.current.data.datasets.find(
+      (set: any) => set.label === label
+    );
     if (f) {
-      remove(this.chart!.data.datasets, (set) => {
+      remove(this.chart.current.data.datasets, (set: any) => {
         return set.label === label;
       });
     }
 
     gtSets.forEach((dataset) => {
-      this.chart?.data.datasets.push(dataset);
+      this.chart.current.data.datasets.push(dataset);
     });
 
-    this.chart?.update();
+    this.chart.current.update();
 
     return;
   }
@@ -129,14 +132,16 @@ export class Store {
 
     const label = `${satnum}-ground-track`;
 
-    const f = this.chart?.data.datasets.find((set) => set.label === label);
+    const f = this.chart.current.data.datasets.find(
+      (set: any) => set.label === label
+    );
     if (f) {
-      remove(this.chart!.data.datasets, (set) => {
+      remove(this.chart.current.data.datasets, (set: any) => {
         return set.label === label;
       });
     }
 
-    this.chart?.update();
+    this.chart.current.update();
   }
 
   public addDataSet(
@@ -220,18 +225,20 @@ export class Store {
     // check if exists, if so, delete first
     // datasets.find()
 
-    const f = this.chart?.data.datasets.find((set) => set.label === label);
+    const f = this.chart.current.data.datasets.find(
+      (set: any) => set.label === label
+    );
     if (f) {
-      remove(this.chart!.data.datasets, (set) => {
+      remove(this.chart.current.data.datasets, (set: any) => {
         return set.label === label;
       });
     }
 
-    datasets.forEach((dataset) => {
-      this.chart?.data.datasets.push(dataset);
+    datasets.forEach((dataset: any) => {
+      this.chart.current.data.datasets.push(dataset);
     });
 
-    this.chart?.update();
+    this.chart.current.update();
     return;
   }
 
@@ -335,10 +342,12 @@ export class Store {
       await this.activeSatelliteSubscribtions.get(satnum)?.unsubscribe();
       this.activeSatelliteSubscribtions.delete(satnum);
 
-      const f = this.chart?.data.datasets.find((set) => set.label === satnum);
+      const f = this.chart.current.data.datasets.find(
+        (set: any) => set.label === satnum
+      );
       if (f) {
         console.log("exists, removing");
-        remove(this.chart!.data.datasets, (set) => {
+        remove(this.chart.current.data.datasets, (set: any) => {
           return set.label === satnum;
         });
       }
@@ -348,7 +357,7 @@ export class Store {
         msg: `Disconnected. Connection to ${satelliteName} (${satnum}) closed.`,
       });
 
-      this.chart!.update();
+      this.chart.current.update();
     }
 
     if (this.satelliteChartMetadata.has(satnum)) {
@@ -448,19 +457,21 @@ export class Store {
 
     // check if exists, if so, delete first
     // datasets.find()
-
-    const f = this.chart?.data.datasets.find((set) => set.label === "gs");
+    console.log("CHARTO??!?!??!", this.chart);
+    const f = this.chart.current.data.datasets.find(
+      (set: any) => set.label === "gs"
+    );
     if (f) {
-      remove(this.chart!.data.datasets, (set) => {
+      remove(this.chart.current.data.datasets, (set: any) => {
         return set.label === "gs";
       });
     }
 
     datasets.forEach((dataset) => {
-      this.chart?.data.datasets.push(dataset);
+      this.chart.current.data.datasets.push(dataset);
     });
 
-    this.chart?.update();
+    this.chart.current.update();
     return;
   }
 

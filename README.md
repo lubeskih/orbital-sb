@@ -2,8 +2,7 @@
 
 todo:
 
-- assign colors to satellites and their ground track
-- ground track selection
+- ground station selection
 - day/night map generation
 - CSS tweaks
 - align listbox item's satellite name

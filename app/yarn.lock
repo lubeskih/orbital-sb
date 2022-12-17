@@ -8204,6 +8204,11 @@ react-signal@^0.1.1:
   resolved "https://registry.yarnpkg.com/react-signal/-/react-signal-0.1.1.tgz#fad72ff2ac8568fa992318c6199d6eb9f96cde15"
   integrity sha512-lJUwfiSATZqPuMGsfY5BC+GNoBFUrOBh/fX8og3maAN/Wt6RfltZDjJo8nDwPdBAWmdNa38byUwUfuUp4+3aEg==
 
+react-spinners@^0.13.7:
+  version "0.13.7"
+  resolved "https://registry.yarnpkg.com/react-spinners/-/react-spinners-0.13.7.tgz#0f423c415bfa56765ce9fb36ff604e52a92b37a9"
+  integrity sha512-mRamn56bfxWbGcacif5RT3UbeJaXi2AttjtPwSmomuv2IcxjpbfETCzdTvaQpNDk0E33ENJsStsQeKAZFuJcpA==
+
 react-transition-group@^4.3.0, react-transition-group@^4.4.2, react-transition-group@^4.4.5:
   version "4.4.5"
   resolved "https://registry.yarnpkg.com/react-transition-group/-/react-transition-group-4.4.5.tgz#e53d4e3f3344da8521489fbef8f2581d42becdd1"

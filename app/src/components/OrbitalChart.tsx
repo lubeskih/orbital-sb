@@ -1,10 +1,11 @@
 // @ts-nocheck
 import { Scatter } from "react-chartjs-2";
 import ChartDataLabels from "chartjs-plugin-datalabels";
+import { generateDayNightMap } from "../util";
 
 import day from "../assets/day.png";
 
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import {
   Chart as ChartJS,
   LinearScale,
@@ -15,6 +16,8 @@ import {
   Chart,
 } from "chart.js";
 import { Store } from "../store";
+import React from "react";
+import { BeatLoader } from "react-spinners";
 
 const LONGITUDE_MIN = -180;
 const LONGITUDE_MAX = 180;
@@ -87,48 +90,52 @@ export const options = {
   },
 };
 
-const image = new Image();
-image.src = day;
-const imgPlugin = {
-  id: "custom_canvas_background_image",
-  beforeDraw: (chart: Chart) => {
-    if (image.complete) {
+interface IChartProps {
+  store: Store;
+}
+
+class OrbitalChart extends React.Component<IChartProps, { loaded: boolean }> {
+  constructor(props: IChartProps) {
+    super(props);
+
+    this.state = {
+      loaded: false,
+    };
+  }
+
+  imgPlugin = {
+    id: "image-plugin",
+    beforeDraw: async (chart: Chart) => {
       const ctx = chart.ctx;
       const { top, left, width, height } = chart.chartArea;
 
       const x = left + width / 2 - height / 2;
       const y = top + height / 2 - height / 2;
 
-      ctx.drawImage(image, 32, y, width, height);
-    } else {
-      image.onload = () => chart.draw();
-    }
-  },
-};
+      ctx.drawImage(this.props.store.image, 32, y, width, height);
+    },
+  };
 
-interface IChartProps {
-  store: Store;
+  componentDidMount() {
+    generateDayNightMap()
+      .then((data) => (this.props.store.image = data))
+      .then(() => this.setState({ loaded: true }));
+  }
+
+  render() {
+    const { loaded } = this.state;
+
+    if (!loaded) return <BeatLoader color="#000" />;
+
+    return (
+      <Scatter
+        ref={this.props.store.chart}
+        plugins={[this.imgPlugin, ChartDataLabels]}
+        options={options}
+        data={{ datasets: [] }}
+      />
+    );
+  }
 }
-
-const OrbitalChart = (props: IChartProps) => {
-  const chartRef = useRef(null);
-
-  useEffect(() => {
-    const chart = chartRef.current;
-
-    if (chart) {
-      props.store.chart = chart;
-    }
-  }, []);
-
-  return (
-    <Scatter
-      ref={chartRef}
-      plugins={[imgPlugin, ChartDataLabels]}
-      options={options}
-      data={{ datasets: [] }}
-    />
-  );
-};
 
 export default OrbitalChart;
