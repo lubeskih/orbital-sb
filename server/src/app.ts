@@ -24,16 +24,6 @@ const pg_client = new pg.Client({
 const app = express();
 const port = 3000;
 
-let supabaseUrl = process.env.SUPABASE_URL;
-const supabaseApiKey = process.env.SUPABASE_API_KEY;
-const supabaseSecret = process.env.SUPABASE_SECRET;
-
-const supabaseClient = supabase.createClient(supabaseUrl, supabaseApiKey, {
-    auth: {
-        persistSession: true,
-    },
-});
-
 async function fetchServerSettings() {
     const text = 'SELECT last_update FROM public.settings';
 
