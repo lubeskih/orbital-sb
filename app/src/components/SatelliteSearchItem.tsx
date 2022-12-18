@@ -1,69 +1,12 @@
 // Style
 import "bootstrap/dist/css/bootstrap.min.css";
-import "./listbox.css";
+import "./SatelliteSearch.css";
 
-import React, { useState } from "react";
+import { useState } from "react";
 import { Store } from "../store";
-import { observer } from "mobx-react-lite";
-import { toJS } from "mobx";
 import { ActiveSatellite } from "../types";
 
-interface IListboxProps {
-  store: Store;
-}
-
-const ListBox = observer((props: IListboxProps) => {
-  let all = toJS(props.store.availableSatellites);
-  let [value, setValue] = useState("");
-
-  let [alternate, setAlternate] = useState(true);
-
-  const handleOnInputChange = (value: string) => {
-    setValue(value);
-  };
-
-  const handleAlternate = () => {
-    const color = alternate ? "#ebebeb" : "#cecece";
-    alternate = !alternate;
-    return color;
-  };
-
-  const items = all.filter((item) =>
-    item.name.toLowerCase().includes(value.toLowerCase())
-  );
-
-  return (
-    <>
-      <input
-        onChange={(e) => handleOnInputChange(e.target.value)}
-        className="search-listbox"
-        type="text"
-        id="fname"
-        name="fname"
-        placeholder="Filter ..."
-      ></input>
-      <div className="listbox">
-        <div className="elements">
-          {items.map((item) => (
-            <>
-              {/* <p>{item.isActive ? "true" : "false"}</p> */}
-              <Item
-                satelliteGroundTrackActive={item.isGroundTrackEnabled}
-                satelliteTrackingActive={item.isActive}
-                color={handleAlternate()}
-                name={item.name}
-                satnum={item.satnum}
-                store={props.store}
-              />
-            </>
-          ))}
-        </div>
-      </div>
-    </>
-  );
-});
-
-interface IItemProps {
+interface ISatelliteSearchItemProps {
   name: string;
   satnum: string;
   satelliteTrackingActive: boolean;
@@ -72,7 +15,7 @@ interface IItemProps {
   store: Store;
 }
 
-function Item(props: IItemProps) {
+function SatelliteSearchItem(props: ISatelliteSearchItemProps) {
   const [track, setTrack] = useState(props.satelliteTrackingActive);
   const [groundTrack, setGroundTrack] = useState(
     props.satelliteGroundTrackActive
@@ -139,4 +82,4 @@ function Item(props: IItemProps) {
   );
 }
 
-export default ListBox;
+export default SatelliteSearchItem;

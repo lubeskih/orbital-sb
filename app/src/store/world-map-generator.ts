@@ -1,7 +1,7 @@
 import moment from "moment";
 
-import worldDay from "./assets/day.png";
-import worldNight from "./assets/world-night.png";
+import worldDay from "../assets/day.png";
+import worldNight from "../assets/world-night.png";
 
 async function loadImage(url: string, elem: any) {
   return new Promise((resolve, reject) => {
@@ -11,7 +11,8 @@ async function loadImage(url: string, elem: any) {
   });
 }
 
-// Uses math from http://www.edesign.nl/2009/05/14/math-behind-a-world-sunlight-map/
+// generates day/night map of the earth to be displayed on the chart
+// Uses the mathemathics from http://www.edesign.nl/2009/05/14/math-behind-a-world-sunlight-map/
 export async function generateDayNightMap() {
   let daysInyear = 365;
   let mapOffset = 0;
@@ -20,34 +21,19 @@ export async function generateDayNightMap() {
   let m = moment().minute();
   let s = moment().second();
 
-  let currentDateTime = moment().format();
   let timezoneOffset = 3600;
 
-  // console.log("Hour: ", t);
-  // console.log("Minute: ", m);
-  // console.log("Seconds: ", s);
-
-  // console.log("CurrentDateTime: ", currentDateTime);
-  // console.log("Timezone Offset: ", timezoneOffset);
-
-  let time = t + m / 60 + s / 3600;
-
-  // console.log("Time 1: ", time);
+  let time = t + m / 60 + s / timezoneOffset;
 
   time = time + 24 + 6 - timezoneOffset / 3600 - mapOffset;
 
-  // console.log("Time 2: ", time)
-
   let dayOfYear = moment().dayOfYear();
-  // console.log("Day of year: ", dayOfYear);
 
   while (time > 24) {
     time = time - 24;
   }
 
   time = time / 24;
-
-  // console.log("Time 3: ", time);
 
   let pointingFromEarthToSun = new Vec3(
     Math.sin(2 * Math.PI * time),
@@ -67,12 +53,9 @@ export async function generateDayNightMap() {
 
   pointingFromEarthToSun = pointingFromEarthToSun.add(seasonOffset);
 
-  // console.log("NEW: ", pointingFromEarthToSun);
-
   let earthDay = new Image(2048, 1024);
   let earthNight = new Image(2048, 1024);
 
-  // earthDay.src = worldDay;
   await loadImage(worldDay, earthDay);
   await loadImage(worldNight, earthNight);
 
@@ -87,7 +70,6 @@ export async function generateDayNightMap() {
 
   // console.log("NEWEST ",  pointingFromEarthToSun);
 
-  // var canvasEdited = document.getElementById("canvasEdited");
   let canvasDay = document.createElement("CANVAS") as HTMLCanvasElement;
   canvasDay.id = "1";
   let canvasNight = document.createElement("CANVAS") as HTMLCanvasElement;

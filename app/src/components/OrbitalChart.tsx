@@ -1,11 +1,8 @@
 // @ts-nocheck
 import { Scatter } from "react-chartjs-2";
 import ChartDataLabels from "chartjs-plugin-datalabels";
-import { generateDayNightMap } from "../util";
-
-import day from "../assets/day.png";
-
-import { useRef, useEffect, useState } from "react";
+import React from "react";
+import { BeatLoader } from "react-spinners";
 import {
   Chart as ChartJS,
   LinearScale,
@@ -15,9 +12,9 @@ import {
   Legend,
   Chart,
 } from "chart.js";
+
 import { Store } from "../store";
-import React from "react";
-import { BeatLoader } from "react-spinners";
+import { generateDayNightMap } from "../store/world-map-generator";
 
 const LONGITUDE_MIN = -180;
 const LONGITUDE_MAX = 180;
@@ -83,7 +80,6 @@ export const options = {
     tooltip: {
       callbacks: {
         label: function (context: any) {
-          console.log(context);
           let timeStamp = context.raw.timeStamp;
           let label;
 
@@ -98,7 +94,6 @@ export const options = {
       },
     },
   },
-  // hover: { mode: null },
   transitions: {},
   elements: {
     point: {
