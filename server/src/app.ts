@@ -19,6 +19,7 @@ async function init() {
     try {
         // const satelliteService = Container.get(SatelliteService);
         // satelliteService.recalculateAndUpdateSatelliteGroundTrack();
+        // await satelliteService.seedSatelliteDb();
 
         setInterval(() => {
             const satelliteService = Container.get(SatelliteService);
@@ -29,6 +30,11 @@ async function init() {
             const satelliteService = Container.get(SatelliteService);
             satelliteService.recalculateAndUpdateSatelliteGroundTrack();
         }, 1000 * 60 * 60 * 2); // every 2 hours
+
+        setInterval(() => {
+            const satelliteService = Container.get(SatelliteService);
+            satelliteService.updateTleSets();
+        }, 1000 * 60 * 60 * 120); // every 5 days
     } catch (e) {
         console.error(e);
     }
