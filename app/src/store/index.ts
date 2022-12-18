@@ -9,6 +9,7 @@ import satone from "../assets/satone.png";
 import sattwo from "../assets/sattwo.png";
 import antenna from "../assets/antenna.png";
 import React from "react";
+import { ANON_JWT_KEY, SUPABASE_API_URL } from "./env";
 
 function createLinearHalfHiddenFn() {
   let dir = true;
@@ -234,8 +235,8 @@ export class Store {
 
   constructor() {
     this.supabaseClient = supabase.createClient(
-      "https://ztrblgtcslxbqawnthvg.supabase.co",
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0cmJsZ3Rjc2x4YnFhd250aHZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE2NzA2MTY2NDEsImV4cCI6MTk4NjE5MjY0MX0.wKrIum0Fqruru1pFB3rdKJAPj4YecZ_D6hCtmlOWvcA",
+      SUPABASE_API_URL,
+      ANON_JWT_KEY,
       {
         auth: {
           persistSession: true,

@@ -1,0 +1,3 @@
+export const ANON_JWT_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0cmJsZ3Rjc2x4YnFhd250aHZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE2NzEzNTI2MTcsImV4cCI6MTk4NjkyODYxN30.ls82sZ09AIeCCvNG7V_-tY13oE6DZ2llD_z_btNkZwY";
+export const SUPABASE_API_URL = "https://ztrblgtcslxbqawnthvg.supabase.co";
