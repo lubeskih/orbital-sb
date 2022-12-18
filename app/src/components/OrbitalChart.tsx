@@ -80,7 +80,6 @@ export const options = {
     tooltip: {
       callbacks: {
         label: function (context: any) {
-          console.log(context);
           let timeStamp = context.raw.timeStamp;
           let label;
 
