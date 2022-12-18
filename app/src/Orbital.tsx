@@ -5,7 +5,8 @@ import { toJS } from "mobx";
 import { observer } from "mobx-react";
 import React, { Component, useEffect, useState } from "react";
 
-import Select from "react-select";
+import Select, { SingleValue } from "react-select";
+import Async, { useAsync } from "react-select/async";
 import Listbox from "./components/listbox";
 import OrbitalChart from "./components/OrbitalChart";
 import "./Orbital.css";
@@ -16,6 +17,7 @@ import banner from "./assets/banner.png";
 import { Store } from "./store";
 import "moment-timezone";
 import moment from "moment";
+import AsyncSelect from "react-select/async";
 const store = new Store();
 
 interface ILogProps {
@@ -80,19 +82,44 @@ export class LogView extends Component<IProps, {}> {
 function Orbital() {
   const client = store.getClient();
 
-  const handleOnSearchInputChange = (e: string) => {
-    if (!e) return;
-    store.fetchGroundStation(e);
+  const promiseOptions = (inputValue: string) => {
+    if (!inputValue)
+      return Promise.resolve([{ label: "No data.", value: "No data." }]);
+
+    return Promise.resolve({})
+      .then(() => {
+        return store.fetchGroundStation(inputValue);
+      })
+      .then((data) => {
+        if (!data) return [{ label: "No data.", value: "No data." }];
+
+        return data.map((d) => ({ label: d.label, value: d.value }));
+      });
   };
 
-  const handleOnGroundStationChange = (groundStation?: string) => {
-    if (!groundStation) return;
+  const handleGroundStationChange = (
+    inputValue: SingleValue<{ label: string; value: string }>
+  ) => {
+    if (!inputValue) return;
 
-    store.updateGroundStation(groundStation);
+    let name = inputValue.label;
+    let latitude = parseFloat(inputValue.value.split(";")[0]);
+    let longitude = parseFloat(inputValue.value.split(";")[1]);
+
+    store.updateGroundStation(name, latitude, longitude);
   };
 
-  const getGs = () => {
-    return store.groundStations;
+  const customStyles = {
+    control: (base: any) => ({
+      ...base,
+      height: 35,
+      minHeight: 35,
+      borderRadius: 0,
+      colors: {
+        primary25: "lightgray",
+        primary: "#2b303b",
+      },
+    }),
   };
 
   return (
@@ -108,24 +135,12 @@ function Orbital() {
             <div className="col md-12 mb-3">
               <small className="headers">Ground Station</small>
               <div className="position">
-                <Select
-                  theme={(theme) => ({
-                    ...theme,
-                    borderRadius: 0,
-                    colors: {
-                      ...theme.colors,
-                      primary25: "lightgray",
-                      primary: "#2b303b",
-                    },
-                  })}
-                  className="enigma-type"
-                  isDisabled={false}
-                  defaultValue={store.groundStations[0]}
-                  options={getGs()}
-                  onChange={(change) =>
-                    handleOnGroundStationChange(change?.value)
-                  }
-                  onInputChange={(change) => handleOnSearchInputChange(change)}
+                <AsyncSelect
+                  styles={customStyles}
+                  cacheOptions
+                  defaultOptions
+                  loadOptions={promiseOptions}
+                  onChange={(e) => handleGroundStationChange(e)}
                 />
               </div>
             </div>

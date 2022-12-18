@@ -65,20 +65,6 @@ export class Store {
 
   public satelliteImages = [satone, sattwo];
 
-  public currentGroundStation: {
-    name: string;
-    latitude: number;
-    longitude: number;
-    color: string;
-    image: string;
-  } = {
-    name: "",
-    latitude: 0,
-    longitude: 0,
-    color: "",
-    image: "",
-  };
-
   public async showSatelliteGroundTrack(satnum: string) {
     if (!this.activeSatellitesGroundTrackMap.has(satnum)) return;
 
@@ -257,11 +243,16 @@ export class Store {
       }
     );
 
+    this.groundStationAntennaImage = new Image();
+    this.groundStationAntennaImage.src = antenna;
+
     this.fetchAvailableSatellites();
     this.fetchGroundStation("A");
 
     makeAutoObservable(this);
   }
+
+  public groundStationAntennaImage;
 
   public getAllActiveSatelliteSatnums() {
     return this.availableSatellites
@@ -375,93 +366,13 @@ export class Store {
     return this.supabaseClient;
   };
 
-  public updateGroundStation(groundStation: string) {
-    let gs = this.groundStations.find(
-      (station) => station.label === groundStation
-    );
-
-    console.log("GS", gs);
-    console.log(this.groundStations);
-    if (!gs) {
-      console.log("NO");
-      return;
-    }
-
-    this.currentGroundStation.latitude = gs.latitude;
-    this.currentGroundStation.longitude = gs.longitude;
-    this.currentGroundStation.color = this.rgbaColors[0];
-
-    console.log("CURRENT:", this.currentGroundStation);
-
-    let satImage = new Image();
-    satImage.src = antenna;
-    this.currentGroundStation.image = satImage.src;
-
-    console.log(this.currentGroundStation.longitude);
-    console.log(this.currentGroundStation.latitude);
-    let datasets = [
-      {
-        name: `${groundStation}`,
-        label: `gs`,
-        data: [
-          {
-            x: this.currentGroundStation.longitude,
-            y: this.currentGroundStation.latitude,
-          },
-        ],
-        radius: 0,
-        borderWidth: 2,
-        pointColor: "transparent",
-        pointBorderColor: this.currentGroundStation.color,
-        backgroundColor: this.currentGroundStation.color,
-        fill: true,
-        datalabels: {
-          display: false,
-        },
-        order: 2,
-        animations: {
-          radius: {
-            duration: 3000,
-            loop: false,
-            delay: 1000,
-            to: 50,
-            fn: createLinearHalfHiddenFn(),
-          },
-          numbers: { duration: 0 },
-          colors: {
-            type: "color",
-            duration: 3000,
-            delay: 1000,
-            to: "transparent",
-            loop: false,
-          },
-        },
-      },
-      {
-        name: `${groundStation}`,
-        label: `gs`,
-        datalabels: {
-          display: true,
-        },
-        pointStyle: satImage,
-        data: [
-          {
-            x: this.currentGroundStation.longitude,
-            y: this.currentGroundStation.latitude,
-          },
-        ],
-        radius: 1,
-        borderWidth: 0,
-        pointColor: "transparent",
-        pointBorderColor: this.currentGroundStation.color,
-        backgroundColor: this.currentGroundStation.color,
-        fill: true,
-      },
-    ];
-
+  public updateGroundStation(
+    groundStation: string,
+    latitude: number,
+    longitude: number
+  ) {
     // check if exists, if so, delete first
     // datasets.find()
-    console.log("CHARTO??!?!??!", this.chart);
     const f = this.chart.current.data.datasets.find(
       (set: any) => set.label === "gs"
     );
@@ -470,6 +381,29 @@ export class Store {
         return set.label === "gs";
       });
     }
+
+    let datasets = [
+      {
+        name: `${groundStation}`,
+        label: `gs`,
+        datalabels: {
+          display: true,
+        },
+        pointStyle: this.groundStationAntennaImage,
+        data: [
+          {
+            x: longitude,
+            y: latitude,
+          },
+        ],
+        radius: 1,
+        borderWidth: 0,
+        pointColor: "transparent",
+        pointBorderColor: this.rgbaColorsGt[0],
+        backgroundColor: this.rgbaColorsGt[0],
+        fill: true,
+      },
+    ];
 
     datasets.forEach((dataset) => {
       this.chart.current.data.datasets.push(dataset);
@@ -497,16 +431,12 @@ export class Store {
     }
     if (!data) return;
 
-    runInAction(() =>
-      data.forEach((gs) =>
-        this.groundStations.push({
-          value: gs.name,
-          label: gs.name,
-          latitude: parseFloat(gs.latitude),
-          longitude: parseFloat(gs.longitude),
-        })
-      )
-    );
+    console.log("Received: ", data);
+
+    return data.map((gs) => ({
+      value: `${gs.latitude};${gs.longitude}`,
+      label: gs.name,
+    }));
   }
 
   public async fetchSatelliteGroundTrack(satnum: string) {
@@ -625,7 +555,6 @@ export class Store {
     longitude: number;
   }[] = [];
 
-  @observable public currentGroundStations = [];
   @observable public selectedSatellite = null;
 
   private supabaseUrl = process.env.SUPABASE_URL || "";
