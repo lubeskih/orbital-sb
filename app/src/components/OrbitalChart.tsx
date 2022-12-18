@@ -80,8 +80,25 @@ export const options = {
         family: "Ubuntu Mono",
       },
     },
+    tooltip: {
+      callbacks: {
+        label: function (context: any) {
+          console.log(context);
+          let timeStamp = context.raw.timeStamp;
+          let label;
+
+          if (timeStamp === undefined || timeStamp === null) {
+            label = context.formattedValue;
+          } else {
+            label = `${context.raw.timeStamp} ${context.formattedValue}`;
+          }
+
+          return label;
+        },
+      },
+    },
   },
-  hover: { mode: null },
+  // hover: { mode: null },
   transitions: {},
   elements: {
     point: {

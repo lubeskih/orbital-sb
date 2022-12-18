@@ -32,7 +32,10 @@ export class Store {
     new Map();
   public activeSatellitesGroundTrackMap: Map<
     string,
-    { lastUpdated?: number; data: { x: number; y: number }[][] }
+    {
+      lastUpdated?: number;
+      data: { x: number; y: number; timeStamp: string }[][];
+    }
   > = new Map();
   public satelliteChartMetadata: Map<
     string,
@@ -103,7 +106,8 @@ export class Store {
         },
         showLine: true,
         borderWidth: 2,
-        pointRadius: 0,
+        pointRadius: 3,
+        pointHoverRadius: 8,
         fill: false,
         borderColor: color,
       };
@@ -520,7 +524,11 @@ export class Store {
     }
 
     const { ground_track } = data[0];
-    const parsed = JSON.parse(ground_track) as { x: number; y: number }[][];
+    const parsed = JSON.parse(ground_track) as {
+      x: number;
+      y: number;
+      timeStamp: string;
+    }[][];
 
     if (this.activeSatellitesGroundTrackMap.has(satnum)) {
       this.activeSatellitesGroundTrackMap.set(satnum, {
