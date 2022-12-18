@@ -1,34 +1,84 @@
 // Libraries
 import { action, makeAutoObservable, observable, runInAction } from "mobx";
 import { remove } from "lodash";
-
 import * as supabase from "@supabase/supabase-js";
-import { ActiveSatellite } from "../types";
+import React from "react";
 
+import { ActiveSatellite, Log } from "../types";
 import satone from "../assets/satone.png";
 import sattwo from "../assets/sattwo.png";
 import antenna from "../assets/antenna.png";
-import React from "react";
 import { ANON_JWT_KEY, SUPABASE_API_URL } from "./env";
+import { rgbaColors, rgbaColorsGt } from "./constants";
+import { createLinearHalfHiddenFn } from "./util";
 
-function createLinearHalfHiddenFn() {
-  let dir = true;
-  return (from: number, to: number, fraction: number) => {
-    if (fraction > 0.99 && dir) {
-      dir = false;
-    }
-    if (fraction < 0.01 && !dir) {
-      dir = true;
-    }
-    return dir ? fraction * to : 0;
-  };
+interface IStore {
+  showSatelliteGroundTrack(satnum: string): Promise<void>;
+  hideSatelliteGroundTrack(satnum: string): Promise<void>;
+  renderSatellitePositionOnChart(
+    label: string,
+    data: { x: number; y: number }[],
+    satelliteName: string
+  ): void;
+  getAllActiveSatelliteSatnums(): {
+    isActive: boolean;
+    satnum: string;
+    isGroundTrackEnabled: boolean;
+  }[];
+  subscribeToSatellite(satnum: string, satelliteName: string): Promise<void>;
+  unsubscribeFromSatellite(
+    satnum: string,
+    satelliteName?: string
+  ): Promise<void>;
+  updateGroundStation(
+    groundStation: string,
+    latitude: number,
+    longitude: number
+  ): void;
+  fetchGroundStation(searchString: string): Promise<
+    {
+      value: string;
+      label: any;
+    }[]
+  >;
+  fetchSatelliteGroundTrack(satnum: string): Promise<void>;
+  fetchAvailableSatellites(): Promise<void>;
+  trackSatellite(satnum: string): Promise<void>;
+  untrackSatellite(satnum: string): Promise<void>;
+  addToLog: (log: Log) => void;
 }
 
 /**
  * Application store
  */
-export class Store {
+export class Store implements IStore {
+  rgbaColorsGt: any;
+  constructor() {
+    this.supabaseClient = supabase.createClient(
+      SUPABASE_API_URL,
+      ANON_JWT_KEY,
+      {
+        auth: {
+          persistSession: true,
+        },
+      }
+    );
+
+    this.groundStationAntennaImage = new Image();
+    this.groundStationAntennaImage.src = antenna;
+
+    this.fetchAvailableSatellites();
+
+    makeAutoObservable(this);
+  }
+  ///////////////
+  // VARIABLES //
+  ///////////////
+
+  // supabase client
   private supabaseClient: supabase.SupabaseClient;
+
+  // satellite related maps (chart, subscriptions ..)
   private activeSatelliteSubscribtions: Map<string, supabase.RealtimeChannel> =
     new Map();
   public activeSatellitesGroundTrackMap: Map<
@@ -46,25 +96,28 @@ export class Store {
       groundTrackColor: string;
     }
   > = new Map();
-  public rgbaColors = [
-    "rgba(37, 150, 190,1)",
-    "rgba(50, 125, 168,1)",
-    "rgba(50, 168, 133,1)",
-    "rgba(119, 50, 168,1)",
-    "rgba(168, 50, 60,1)",
-  ];
 
-  public rgbaColorsGt = [
-    "rgba(37, 150, 190,0.5)",
-    "rgba(50, 125, 168,0.5)",
-    "rgba(50, 168, 133,0.5)",
-    "rgba(119, 50, 168,0.5)",
-    "rgba(168, 50, 60,0.5)",
-  ];
-  public image: HTMLImageElement = new Image();
+  // chart and background image
   public chart: any = React.createRef();
+  public image: HTMLImageElement = new Image();
+  public groundStationAntennaImage;
 
+  // satellite icons
   public satelliteImages = [satone, sattwo];
+
+  @observable.ref public availableSatellites: {
+    name: string;
+    isActive: boolean;
+    isGroundTrackEnabled: boolean;
+    satnum: string;
+  }[] = [];
+
+  public activeSatellitesMap: Map<string, ActiveSatellite> = new Map();
+  public log: Log[] = observable.array([]);
+
+  ///////////////
+  // FUNCTIONS //
+  ///////////////
 
   public async showSatelliteGroundTrack(satnum: string) {
     if (!this.activeSatellitesGroundTrackMap.has(satnum)) return;
@@ -135,7 +188,7 @@ export class Store {
     this.chart.current.update();
   }
 
-  public addDataSet(
+  public renderSatellitePositionOnChart(
     label: string,
     data: { x: number; y: number }[],
     satelliteName: string
@@ -149,8 +202,7 @@ export class Store {
       color = metadata!.color;
     } else {
       // register
-      color =
-        this.rgbaColors[Math.floor(Math.random() * this.rgbaColors.length)];
+      color = rgbaColors[Math.floor(Math.random() * rgbaColors.length)];
       let image =
         this.satelliteImages[
           Math.floor(Math.random() * this.satelliteImages.length)
@@ -213,9 +265,6 @@ export class Store {
       },
     ];
 
-    // check if exists, if so, delete first
-    // datasets.find()
-
     const f = this.chart.current.data.datasets.find(
       (set: any) => set.label === label
     );
@@ -233,28 +282,6 @@ export class Store {
     return;
   }
 
-  constructor() {
-    this.supabaseClient = supabase.createClient(
-      SUPABASE_API_URL,
-      ANON_JWT_KEY,
-      {
-        auth: {
-          persistSession: true,
-        },
-      }
-    );
-
-    this.groundStationAntennaImage = new Image();
-    this.groundStationAntennaImage.src = antenna;
-
-    this.fetchAvailableSatellites();
-    this.fetchGroundStation("A");
-
-    makeAutoObservable(this);
-  }
-
-  public groundStationAntennaImage;
-
   public getAllActiveSatelliteSatnums() {
     return this.availableSatellites
       .filter((satellite) => satellite.isActive)
@@ -267,7 +294,6 @@ export class Store {
 
   public async subscribeToSatellite(satnum: string, satelliteName: string) {
     if (this.activeSatelliteSubscribtions.has(satnum)) {
-      console.info("Aready subscribed to ", satnum);
       return;
     }
 
@@ -298,8 +324,6 @@ export class Store {
 
           const { name, latitude, longitude, speed } = payload.new;
 
-          console.log(payload);
-
           this.addToLog({
             type: "incoming",
             msg: `Incoming payload from ${name}`,
@@ -311,7 +335,7 @@ export class Store {
             },
           });
 
-          this.addDataSet(
+          this.renderSatellitePositionOnChart(
             `${satnum}`,
             [{ x: longitude, y: latitude }],
             satelliteName
@@ -321,7 +345,6 @@ export class Store {
       .subscribe();
 
     this.activeSatelliteSubscribtions.set(satnum, subscription);
-    console.info("Subscribed to satellite ", satnum);
     this.addToLog({
       type: "info",
       msg: `Connected. Now tracking ${satelliteName} (${satnum})`,
@@ -342,7 +365,6 @@ export class Store {
         (set: any) => set.label === satnum
       );
       if (f) {
-        console.log("exists, removing");
         remove(this.chart.current.data.datasets, (set: any) => {
           return set.label === satnum;
         });
@@ -362,10 +384,6 @@ export class Store {
 
     return;
   }
-
-  public getClient = () => {
-    return this.supabaseClient;
-  };
 
   public updateGroundStation(
     groundStation: string,
@@ -400,8 +418,8 @@ export class Store {
         radius: 1,
         borderWidth: 0,
         pointColor: "transparent",
-        pointBorderColor: this.rgbaColorsGt[0],
-        backgroundColor: this.rgbaColorsGt[0],
+        pointBorderColor: rgbaColorsGt[0],
+        backgroundColor: rgbaColorsGt[0],
         fill: true,
       },
     ];
@@ -415,9 +433,6 @@ export class Store {
   }
 
   public async fetchGroundStation(searchString: string) {
-    console.log("Received search string ", searchString);
-    this.groundStations = [];
-
     const { data, error } = await this.supabaseClient
       .from("ground_station")
       .select("name,latitude,longitude,elevation")
@@ -428,16 +443,20 @@ export class Store {
       console.error(
         `Error while fetching ground stations. Error ${error.message}`
       );
-      return;
+      return [
+        { value: "No ground station data.", label: "No ground station data." },
+      ];
     }
-    if (!data) return;
-
-    console.log("Received: ", data);
-
-    return data.map((gs) => ({
-      value: `${gs.latitude};${gs.longitude}`,
-      label: gs.name,
-    }));
+    if (data === null)
+      return [
+        { value: "No ground station data.", label: "No ground station data." },
+      ];
+    else {
+      return data.map((gs) => ({
+        value: `${gs.latitude};${gs.longitude}`,
+        label: gs.name,
+      }));
+    }
   }
 
   public async fetchSatelliteGroundTrack(satnum: string) {
@@ -540,36 +559,6 @@ export class Store {
     }
   }
 
-  @observable.ref public availableSatellites: {
-    name: string;
-    isActive: boolean;
-    isGroundTrackEnabled: boolean;
-    satnum: string;
-  }[] = [];
-  public activeSatellitesMap: Map<string, ActiveSatellite> = new Map();
-
-  @observable public activeSatellites: { name: string; satnum: string }[] = [];
-  @observable.ref public groundStations: {
-    value: string;
-    label: string;
-    latitude: number;
-    longitude: number;
-  }[] = [];
-
-  @observable public selectedSatellite = null;
-
-  private supabaseUrl = process.env.SUPABASE_URL || "";
-  private supabaseApiKey = process.env.SUPABASE_API_KEY || "";
-
-  // array or map od item => flag
-  // metod shto selektira flag
-
-  // dodava vo array
-  // array se koristi vo listbox da se izrenderirash checked / uncheck
-  // vo isto vreme se koristi vo mapata da znaeme dal se render ili ne
-
-  public log: Log[] = observable.array([]);
-
   addToLog = action((log: Log) => {
     if (this.log.length > 9) {
       this.log.pop();
@@ -585,17 +574,4 @@ export class Store {
 
     this.log.unshift(log);
   });
-
-  // ChartJS
-}
-
-interface Log {
-  type: "incoming" | "info";
-  msg?: string;
-  data?: {
-    lat: string;
-    lon: string;
-    spd: string;
-    name: string;
-  };
 }
