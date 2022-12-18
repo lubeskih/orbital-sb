@@ -10,7 +10,10 @@ export function infoPanel() {
       <a href="https://supabase.com/docs/guides/realtime">Supabase Realtime</a>{" "}
       engine to update the satellite position in real-time. For technical
       documentation regarding architecture and how it works, visit the{" "}
-      <a href="https://github.com/lubeskih/orbital-sb/">docs</a>, or check the{" "}
+      <a href="https://github.com/lubeskih/orbital-sb/blob/master/README.md">
+        docs
+      </a>
+      , or check the{" "}
       <a href="https://github.com/lubeskih/orbital-sb/">repository on GitHub</a>
       . Written with ❤️ by <a href="https://lh.mk">lh.mk</a>. Have fun using it
       as I had fun writing it. :-)
