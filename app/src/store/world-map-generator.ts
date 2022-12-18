@@ -11,7 +11,8 @@ async function loadImage(url: string, elem: any) {
   });
 }
 
-// Uses math from http://www.edesign.nl/2009/05/14/math-behind-a-world-sunlight-map/
+// generates day/night map of the earth to be displayed on the chart
+// Uses the mathemathics from http://www.edesign.nl/2009/05/14/math-behind-a-world-sunlight-map/
 export async function generateDayNightMap() {
   let daysInyear = 365;
   let mapOffset = 0;
