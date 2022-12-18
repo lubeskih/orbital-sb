@@ -9,16 +9,17 @@ This software was written as part of the [Supabase Launch Week 6 Hackathon](http
 The whole system is written in TypeScript. Orbital is using Node.js on the backend, with an Express server and [Supabase](Supabase) for database interaction. On the frontend Orbital has React, Mobx for store and Supabase (client) to subscribe to satellite position changes.
 
 ![demo](assets/demo.gif)
-_view in bigger resolution [here]()_
+_view in bigger resolution [here](https://github.com/lubeskih/orbital-sb/raw/master/assets/demo.gif)_
 
 **Table of Contents**
 
 - [How to build and run](#How-to-build-and-run)
 - [How it works](#How-it-works)
-  - [High-level architecture]()
-  - [Database schema diagram](#Database-models-and-relations-diagram)
-  - [Backend]()
-  - [Frontend]()
+  - [High-Level Architecture](#High-Level-Architecture)
+  - [Database schema diagram](#Database-schema-diagram)
+  - [Backend](#Backend)
+  - [Frontend](#Frontend)
+- [License](#License)
 
 ## How to build and run
 
@@ -71,10 +72,10 @@ Orbital's frontend and backend don't interact directly with each other. Rather, 
 
 When you decide to "track" a satellite on the frontend, you essentially "subscribe" to row level changes for that satellite's data in the database. Supabase Realtime will assure to notify for all changes your are subscribed to.
 
-### High Level Architecture
+### High-Level Architecture
 
 ![demo](assets/high-level-orbital.png)
-_view in bigger resolution [here]()_
+_view in bigger resolution [here](https://github.com/lubeskih/orbital-sb/raw/master/assets/high-level-orbital.png)_
 
 Involved actors
 
@@ -104,7 +105,7 @@ Frontend:
 ### Database schema diagram
 
 ![demo](assets/database-diagram.png)
-_view in bigger resolution [here]()_
+_view in bigger resolution [here](https://github.com/lubeskih/orbital-sb/raw/master/assets/database-diagram.png)_
 
 The database consists of three tables:
 
@@ -128,7 +129,7 @@ The backend follows an "onion architecture" pattern. There are two involved comp
 The frontend includes 5 main components
 
 ![demo](assets/components.png)
-_view in bigger resolution [here]()_
+_view in bigger resolution [here](https://github.com/lubeskih/orbital-sb/raw/master/assets/components.png)_
 
 - `GroundStationSelect` - for selecting the ground station
 - `OrbitalChart` - for displaying the satellite positions and trajectories (additionally calculates day/night overlay on Earth on load)
