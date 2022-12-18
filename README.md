@@ -132,6 +132,7 @@ The frontend includes 5 main components
 _view in bigger resolution [here](https://github.com/lubeskih/orbital-sb/raw/master/assets/components.png)_
 
 - `GroundStationSelect` - for selecting the ground station
+- `SateliteSearch` - for searching and tracking satellites
 - `OrbitalChart` - for displaying the satellite positions and trajectories (additionally calculates day/night overlay on Earth on load)
 - `Timezone` - displays Server, Local and the time in few major cities
 - `LogView` - Logs events (when receiving a satellite data or interacting with the frontend)
