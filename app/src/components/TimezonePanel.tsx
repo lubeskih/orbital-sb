@@ -91,22 +91,22 @@ function Time(key: string) {
     time = moment().tz(tz).format("LTS");
   }
 
-  const [clockState] = useState(time);
+  const [clockState, setClockState] = useState(time);
 
   useEffect(() => {
     // TODO: messes up the chart for some reason
-    // setInterval(() => {
-    //   let time: string = "";
-    //   if (tz === "UTC") {
-    //     time = moment().utc(false).format("LTS");
-    //   } else if (tz === "Local") {
-    //     time = moment().local(true).format("LTS");
-    //   } else {
-    //     time = moment().tz(tz).format("LTS");
-    //   }
-    //   setClockState(time);
-    // }, 1000);
-  }, []);
+    setInterval(() => {
+      let time: string = "";
+      if (tz === "UTC") {
+        time = moment().utc(false).format("LTS");
+      } else if (tz === "Local") {
+        time = moment().local(true).format("LTS");
+      } else {
+        time = moment().tz(tz).format("LTS");
+      }
+      setClockState(time);
+    }, 5000);
+  }, [tz]);
 
   return <>{clockState}</>;
 }
