@@ -1,9 +1,9 @@
-import { Container, Service } from 'typedi';
+import { Service } from 'typedi';
 import moment from 'moment';
 import * as sgp from 'sgp4';
-import * as pg from 'pg';
 import { GroundTrack, GroundTrackSlices, Satellite, TLE } from '../types';
 import { SupabaseRepository } from '../repository/supabase.repository';
+import { fetch } from 'cross-fetch';
 
 interface ISatelliteService {
     orbitIsPrograde(inclination: number): boolean;
@@ -164,7 +164,6 @@ export class SatelliteService implements ISatelliteService {
             satellite.tle_line_one,
             satellite.tle_line_two,
         );
-
         // slice gt
         const slices: GroundTrackSlices = this.sliceGroundTrack(
             satellite,
@@ -243,7 +242,7 @@ export class SatelliteService implements ISatelliteService {
         if (!this.shouldUpdateTleDatabase(date)) return;
 
         let host = 'https://celestrak.org';
-        let path = '/NORAD/elements/gp.php?GROUP=musson&FORMAT=tle';
+        let path = '/NORAD/elements/gp.php?GROUP=stations&FORMAT=tle';
 
         let res = await fetch(host + path);
         let tleData = await res.text();
@@ -264,8 +263,9 @@ export class SatelliteService implements ISatelliteService {
     }
 
     async seedSatelliteDb() {
+        console.log('[+] Seeding database with satellite data.');
         let host = 'https://celestrak.org';
-        let path = '/NORAD/elements/gp.php?GROUP=musson&FORMAT=tle';
+        let path = '/NORAD/elements/gp.php?GROUP=stations&FORMAT=tle';
 
         let res = await fetch(host + path);
         let tleData = await res.text();
@@ -281,8 +281,11 @@ export class SatelliteService implements ISatelliteService {
         );
 
         for (let i = 0; i < satellites.length; i++) {
+            console.log(`[+] Inserting ${satellites[i].name} ...`);
             this.supabaseRepository.insertNewSatellite(satellites[i]);
         }
+
+        console.log('[+] Done.');
     }
 
     // Private
