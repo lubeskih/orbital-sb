@@ -15,6 +15,7 @@ import {
 
 import { Store } from "../store";
 import { generateDayNightMap } from "../store/world-map-generator";
+import "./OrbitalChart.css";
 
 const LONGITUDE_MIN = -180;
 const LONGITUDE_MAX = 180;
@@ -137,7 +138,12 @@ class OrbitalChart extends React.Component<IChartProps, { loaded: boolean }> {
   render() {
     const { loaded } = this.state;
 
-    if (!loaded) return <BeatLoader color="#000" />;
+    if (!loaded)
+      return (
+        <div className="spinner">
+          <BeatLoader color="#000" />
+        </div>
+      );
 
     return (
       <Scatter

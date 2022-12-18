@@ -1,0 +1,10 @@
+.spinner {
+  position: relative;
+}
+
+.spinner > span {
+  position: absolute;
+  top: 50%;
+  left: 48%;
+  padding: 250px 0px 0px 0px;
+}
