@@ -351,7 +351,7 @@ export class Store implements IStore {
     this.addToLog({
       type: "info",
       timeStamp: moment().format("h:mm:ss A"),
-      msg: `Connected. Now tracking ${satelliteName} (${satnum}).`,
+      msg: `Connected. Now tracking ${satelliteName} (${satnum}). Satellite will appear on the map as soon as Orbital receives it's position.`,
     });
 
     return;
