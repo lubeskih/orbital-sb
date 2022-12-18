@@ -91,7 +91,7 @@ function Time(key: string) {
     time = moment().tz(tz).format("LTS");
   }
 
-  const [clockState, setClockState] = useState(time);
+  const [clockState] = useState(time);
 
   useEffect(() => {
     // TODO: messes up the chart for some reason

@@ -16,14 +16,11 @@ interface ISatelliteSearchItemProps {
 }
 
 function SatelliteSearchItem(props: ISatelliteSearchItemProps) {
-  const [track, setTrack] = useState(props.satelliteTrackingActive);
   const [groundTrack, setGroundTrack] = useState(
     props.satelliteGroundTrackActive
   );
 
   const handleOnTrackInputChange = async (e: boolean) => {
-    setTrack(e);
-
     if (e) {
       await props.store.trackSatellite(props.satnum);
     } else {

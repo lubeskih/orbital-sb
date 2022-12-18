@@ -13,10 +13,6 @@ interface ILogViewProps {
 
 @observer
 export class LogView extends Component<ILogViewProps, {}> {
-  constructor(props: ILogViewProps) {
-    super(props);
-  }
-
   render() {
     if (this.props.store.log.length === 0) {
       return (

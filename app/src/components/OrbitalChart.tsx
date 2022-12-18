@@ -119,9 +119,9 @@ class OrbitalChart extends React.Component<IChartProps, { loaded: boolean }> {
     id: "image-plugin",
     beforeDraw: async (chart: Chart) => {
       const ctx = chart.ctx;
-      const { top, left, width, height } = chart.chartArea;
+      const { top, width, height } = chart.chartArea;
 
-      const x = left + width / 2 - height / 2;
+      // const x = left + width / 2 - height / 2;
       const y = top + height / 2 - height / 2;
 
       ctx.drawImage(this.props.store.image, 32, y, width, height);
