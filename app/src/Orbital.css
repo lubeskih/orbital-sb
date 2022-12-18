@@ -134,20 +134,21 @@ a:hover {
 }
 
 .payload {
-  background-color: #0f0f0f;
-  color: rgb(255, 255, 255);
-  padding: 2px;
+  color: rgb(224, 224, 224);
+  text-decoration: underline;
 }
 
 .log-info {
-  background-color: #137188;
-  color: rgb(255, 255, 255);
-  padding: 2px;
+  color: rgb(226, 226, 226);
+  font-family: "Ubuntu Mono";
+  text-decoration: underline;
+  background-color: rgb(39, 112, 160);
 }
 
 p {
   margin: 3px;
   transition: 0.5s;
+  color: rgb(110, 209, 216);
 
   -webkit-animation: fadein 1s; /* Safari, Chrome and Opera > 12.1 */
   -moz-animation: fadein 1s; /* Firefox < 16 */
@@ -216,17 +217,12 @@ p {
 }
 
 p:hover {
-  background-color: #ededed;
-}
-
-.satnum {
-  background-color: #0d0f14;
-  color: white;
+  background-color: #3f3f3f;
 }
 
 .latitude,
 .longitude,
-.speed {
-  background-color: white;
-  color: #0d0f14;
+.speed,
+.satnum {
+  color: #c9c9c9;
 }

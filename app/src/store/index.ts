@@ -11,6 +11,7 @@ import antenna from "../assets/antenna.png";
 import { ANON_JWT_KEY, SUPABASE_API_URL } from "./env";
 import { rgbaColors, rgbaColorsGt } from "./constants";
 import { createLinearHalfHiddenFn } from "./util";
+import moment from "moment";
 
 interface IStore {
   showSatelliteGroundTrack(satnum: string): Promise<void>;
@@ -301,6 +302,7 @@ export class Store implements IStore {
 
     this.addToLog({
       type: "info",
+      timeStamp: moment().format("h:mm:ss A"),
       msg: `Establishing connection to ${satelliteName} (${satnum}) ...`,
     });
 
@@ -327,6 +329,7 @@ export class Store implements IStore {
           this.addToLog({
             type: "incoming",
             msg: `Incoming payload from ${name}`,
+            timeStamp: moment().format("h:mm:ss A"),
             data: {
               lat: latitude,
               lon: longitude,
@@ -347,7 +350,8 @@ export class Store implements IStore {
     this.activeSatelliteSubscribtions.set(satnum, subscription);
     this.addToLog({
       type: "info",
-      msg: `Connected. Now tracking ${satelliteName} (${satnum})`,
+      timeStamp: moment().format("h:mm:ss A"),
+      msg: `Connected. Now tracking ${satelliteName} (${satnum}).`,
     });
 
     return;
@@ -372,6 +376,7 @@ export class Store implements IStore {
 
       this.addToLog({
         type: "info",
+        timeStamp: moment().format("h:mm:ss A"),
         msg: `Disconnected. Connection to ${satelliteName} (${satnum}) closed.`,
       });
 

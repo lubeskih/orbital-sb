@@ -7,6 +7,7 @@ export interface ActiveSatellite {
 export interface Log {
   type: "incoming" | "info";
   msg?: string;
+  timeStamp: string;
   data?: {
     lat: string;
     lon: string;

@@ -62,16 +62,15 @@ const SatelliteSearch = observer((props: ISatelliteSearchProps) => {
         </>
         <div className="elements">
           {items.map((item) => (
-            <>
-              <SatelliteSearchItem
-                satelliteGroundTrackActive={item.isGroundTrackEnabled}
-                satelliteTrackingActive={item.isActive}
-                color={handleAlternate()}
-                name={item.name}
-                satnum={item.satnum}
-                store={props.store}
-              />
-            </>
+            <SatelliteSearchItem
+              key={`${item.satnum}-${item.name}`}
+              satelliteGroundTrackActive={item.isGroundTrackEnabled}
+              satelliteTrackingActive={item.isActive}
+              color={handleAlternate()}
+              name={item.name}
+              satnum={item.satnum}
+              store={props.store}
+            />
           ))}
         </div>
       </div>

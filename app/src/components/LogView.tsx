@@ -6,6 +6,7 @@ import { observer } from "mobx-react";
 import { Component } from "react";
 import "moment-timezone";
 import { Store } from "../store";
+import { Log } from "../types";
 
 interface ILogViewProps {
   store: Store;
@@ -25,14 +26,18 @@ export class LogView extends Component<ILogViewProps, {}> {
 
     return (
       <>
-        {toJS(this.props.store.log).map((log, index) => {
+        {toJS(this.props.store.log).map((log: Log, index) => {
           if (log.type === "info") {
             return (
               <p
                 key={`${log.type}-${index}-${log.msg}`}
                 className="mfp-move-horizontal"
               >
-                &gt; <span className="log-info">INFO</span> {log.msg}
+                &gt;{" "}
+                <span className="log-info">
+                  INFO <small>({log.timeStamp})</small>
+                </span>{" "}
+                {log.msg}
               </p>
             );
           } else {
@@ -43,9 +48,9 @@ export class LogView extends Component<ILogViewProps, {}> {
               >
                 &gt;{" "}
                 <span className="payload">
-                  INC MSG <small>(redacted)</small>
-                </span>
-                : <span className="satnum">SAT</span> {log.data!.name}.{" "}
+                  INC MSG <small>({log.timeStamp})</small>
+                </span>{" "}
+                <span className="satnum">SAT</span> {log.data!.name}.{" "}
                 <span className="latitude">LAT</span> {log.data!.lat}.{" "}
                 <span className="longitude">LON</span> {log.data!.lon}.{" "}
                 <span className="speed">SPD</span> {log.data!.spd} km/s{" "}
