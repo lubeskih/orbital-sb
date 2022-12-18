@@ -5,7 +5,7 @@ import Container from 'typedi';
 import { SatelliteService } from './service/satellite.service';
 
 const app = express();
-const port = 3001;
+const port = 2415;
 
 app.listen(port, async () => {
     console.log(`Express is listening at http://localhost:${port}`);
