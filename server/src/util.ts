@@ -109,11 +109,13 @@ export async function calculateSatelliteData(
 export type GroundTrackSlices = {
     x: number;
     y: number;
+    timeStamp: string;
 }[][];
 
 export type GroundTrack = {
     x: number;
     y: number;
+    timeStamp: string;
 }[];
 
 // const data: GroundTrackSlices = [
@@ -159,7 +161,8 @@ export function sliceGroundTrack(
         // read until X < X + 1
         // if X > X+1; slice
         for (let i = 0; i < fullGroundTrack.length - 1; i++) {
-            let coordinateSlice: { x: number; y: number }[] = [];
+            let coordinateSlice: { x: number; y: number; timeStamp: string }[] =
+                [];
 
             let next: number;
 
@@ -189,7 +192,8 @@ export function sliceGroundTrack(
         // if X < X+1; slice
 
         for (let i = 0; i < fullGroundTrack.length - 1; i++) {
-            let coordinateSlice: { x: number; y: number }[] = [];
+            let coordinateSlice: { x: number; y: number; timeStamp: string }[] =
+                [];
 
             let next: number;
             if (i + 1 === fullGroundTrack.length - 1) last = true; // workaround
@@ -229,6 +233,7 @@ export function calculateFullGroundTrack(
 
     for (let p = 0; p <= minutesInTheFuture * 2; p++) {
         now.setMinutes(now.getMinutes(), p * 0.5);
+        const timeStamp = moment.utc(now).format('MMM Do YY, h:mm:ss a (UTC)');
 
         // This will contain ECI (http://en.wikipedia.org/wiki/Earth-centered_inertial) coordinates of position and velocity of the satellite
         let positionAndVelocity = sgp.propogate(
@@ -261,7 +266,7 @@ export function calculateFullGroundTrack(
         let longitude = sgp.degreesLong(geodeticCoordinates.longitude);
         let latitude = sgp.degreesLat(geodeticCoordinates.latitude);
 
-        groundTrack.push({ x: longitude, y: latitude });
+        groundTrack.push({ x: longitude, y: latitude, timeStamp: timeStamp });
     }
 
     return groundTrack;
