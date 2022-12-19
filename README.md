@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE.md)
 
-This repository hosts Orbital. A realtime satellite tracking system for the web, with [Supabase Realtime](https://supabase.com/docs/guides/realtime) as its core dependency. Orbital is up and running on [orbital.lh.mk](https://orbital.lh.mk).
+This repository hosts Orbital. A realtime satellite tracking system for the web, with [Supabase Realtime](https://supabase.com/docs/guides/realtime) as its core dependency. Orbital is up and running on [orbital.lh.mk](https://orbital.lh.mk), and currently tracking positions and predicting trajectories of 44 active orbiting space stations including the International Space Station (ISS), the Chinese Shenzhou-15 🇨🇳, SpaceX's Crew Dragon 5 🇺🇸, and the Russian Soyuz MS-22 🇷🇺 ...
 
 This software was written as part of the [Supabase Launch Week 6 Hackathon](https://supabase.com/blog/launch-week-6-hackathon). (team members: [@lubeskih](https://github.com/lubeskih)).
 
